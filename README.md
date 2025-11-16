@@ -87,3 +87,4 @@ safe-zones:
 - keep track of combat loggers across server restarts
 - ~~disabled worlds support~~
 - ~~disable commands while in combat~~
+- Toggle safezone message
