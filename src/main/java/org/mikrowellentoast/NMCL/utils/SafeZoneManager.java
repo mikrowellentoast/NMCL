@@ -1,6 +1,9 @@
 package org.mikrowellentoast.NMCL.utils;
 
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.mikrowellentoast.NMCL.NoMoreCombatLog;
+import org.mikrowellentoast.NMCL.events.ConfigReloadEvent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 
-public class SafeZoneManager {
+public class SafeZoneManager implements Listener {
 
     private final NoMoreCombatLog plugin;
     private final List<SafeZone> zones = new ArrayList<>();
@@ -33,6 +36,11 @@ public class SafeZoneManager {
 
             zones.add(new SafeZone(name, world, x, y, z, radius));
         }
+    }
+
+    @EventHandler
+    public void onConfigReload(ConfigReloadEvent event) {
+        loadZones();
     }
 
     public void saveZones() {
