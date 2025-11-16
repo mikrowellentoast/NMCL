@@ -27,3 +27,6 @@ permissions:
   nomorecombatlog.safezone.remove:
     description: Allows removing safe zones
     default: op
+  nomorecombatlog.safezone.list:
+    description: Allows listing the current safezones
+    default: op
