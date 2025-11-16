@@ -14,6 +14,7 @@ public class SafeZonelist {
 
     public CommandAPICommand getCommand() {
         return new CommandAPICommand("list")
+                .withPermission("nomorecombatlog.safezone.list")
                 .executes((sender, args) -> {
                    if (plugin.getSafeZoneManager().getZones().isEmpty()) {
                        sender.sendMessage("§7 No Safezones have been created");
