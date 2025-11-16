@@ -1,0 +1,33 @@
+enabled : true # Enable or disable the plugin
+
+combat-tag-duration: 30 # Duration in seconds for how long a player is in combat after being hit or hitting another player
+
+punishment-method: kill # Punishment for combat logging: 'kill' or 'ban'
+ban-duration: 1440 # Duration in minutes for temporary bans (only if punishment-method is 'ban') (1440 minutes = 24 hours) (set to -1 for permanent ban)
+
+enable-in-creative: false # Whether to enable combat logging in creative mode
+
+retaliation-attack: false # Enable combat tag only on retaliation attacks
+retaliation-attack-duration: 10 # Duration in seconds for retaliation attack window (only if retaliation-attack is true)
+set-attacker-on-combat: true # Whether to set the attacker as in combat when they hit another player (only if retaliation-attack is true)
+
+allow-portal-teleport: false # Whether to allow teleporting via portals while in combat
+
+blocked-commands: #List of commands that are disabled during combat (without slash)
+  - "home"
+  - "spawn"
+  - "warp"
+  - "tpa"
+
+disabled-worlds: # List of worlds where combat logging is disabled
+  - "world_the_end"
+
+enable-safe-zone: false # Whether to enable safe zones where players are not tagged in combat
+
+safe-zones:
+  - name: spawn
+    world: world
+    x: 0
+    y: 64
+    z: 0
+    radius: 20.0
