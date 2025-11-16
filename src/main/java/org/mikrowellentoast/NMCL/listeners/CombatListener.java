@@ -12,6 +12,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.mikrowellentoast.NMCL.events.ConfigReloadEvent;
+import org.mikrowellentoast.NMCL.utils.SafeZone;
 
 import java.time.Duration;
 import java.util.*;
@@ -30,6 +31,7 @@ public class CombatListener implements Listener {
     private String punishmentMethod;
     private long banDuration;
     private List<String> disabled_worlds;
+    private boolean safe_zones_enabled;
 
 
     private int taskId = -1;
@@ -46,6 +48,7 @@ public class CombatListener implements Listener {
         this.punishmentMethod = plugin.getConfig().getString("punishment-method", "kill");
         this.banDuration = plugin.getConfig().getLong("ban-duration", 1440);
         this.disabled_worlds = plugin.getConfig().getStringList("disabled-worlds");
+        this.safe_zones_enabled = plugin.getConfig().getBoolean("enable-safe-zone", false);
         startActionbarTask();
     }
 
@@ -76,6 +79,7 @@ public class CombatListener implements Listener {
             return;
         }
 
+
         if (disabled_worlds.contains(victim.getWorld().getName()) || disabled_worlds.contains(attacker.getWorld().getName())) {
             return;
         }
@@ -86,6 +90,14 @@ public class CombatListener implements Listener {
 
         if (!ENABLED_IN_CREATIVE && (victim.getGameMode() == GameMode.CREATIVE || attacker.getGameMode() == GameMode.CREATIVE)) {
             return;
+        }
+
+        if (safe_zones_enabled && (isInAnySafeZone(victim) || isInAnySafeZone(attacker))) {
+            if (!victim.hasPermission("nomorecombatlog.safezone.bypass")
+                    && !attacker.hasPermission("nomorecombatlog.safezone.bypass")) {
+                event.setCancelled(true);
+                return;
+            }
         }
 
         long now = System.currentTimeMillis();
@@ -165,6 +177,7 @@ public class CombatListener implements Listener {
         this.punishmentMethod = plugin.getConfig().getString("punishment-method", "kill");
         this.banDuration = plugin.getConfig().getLong("ban-duration", 1440);
         this.disabled_worlds = plugin.getConfig().getStringList("disabled-worlds");
+        this.safe_zones_enabled = plugin.getConfig().getBoolean("enable-safe-zone", false);
         startActionbarTask();
     }
 
@@ -177,6 +190,15 @@ public class CombatListener implements Listener {
             long currentTime = System.currentTimeMillis();
             Iterator<Map.Entry<UUID, Long>> it = combatTagged.entrySet().iterator();
 
+            if (safe_zones_enabled) {
+                for (Player p : Bukkit.getOnlinePlayers()) {
+                    if (isInAnySafeZone(p)) {
+                        p.sendActionBar("§aYou're in a SafeZone");
+
+                    }
+                }
+            }
+
             while (it.hasNext()) {
                 Map.Entry<UUID, Long> entry = it.next();
                 UUID uuid = entry.getKey();
@@ -185,19 +207,37 @@ public class CombatListener implements Listener {
                 long remaining = COMBAT_TAG_DURATION - elapsed;
                 Player player = Bukkit.getPlayer(uuid);
 
+
+                System.out.println(isInAnySafeZone(player));
+
+                if (player == null || !player.isOnline()) {
+                    continue;
+                }
+
+                if (safe_zones_enabled && isInAnySafeZone(player)) {
+                    continue;
+                }
+
+
                 if (remaining <= 0) {
                     it.remove();
                     player.sendActionBar("§cYou're no longer in combat.");
                     continue;
                 }
 
-                ;
-                if (player != null && player.isOnline()) {
-                    long seconds = (remaining + 999) / 1000;
-                    player.sendActionBar("§cCombat: §e" + seconds + "s");
-                }
+                long seconds = (remaining + 999) / 1000;
+                player.sendActionBar("§cCombat: §e" + seconds + "s");
             }
         }, 0L, 20L).getTaskId();
+    }
+
+    private boolean isInAnySafeZone(Player player) {
+        for (SafeZone sz : plugin.getSafeZoneManager().getZones()) {
+            if (sz.isInSafeZone(player.getLocation())) {
+                return true;
+            }
+        }
+        return false;
     }
 
 

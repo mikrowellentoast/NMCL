@@ -14,7 +14,7 @@ public class ReloadListener implements Listener {
     public void OnServerReload(ServerResourcesReloadedEvent event) {
 
         NoMoreCombatLog.getInstance().reloadPluginConfig();
-        NoMoreCombatLog.getInstance().getLogger().info("NoMoreCombatLog configuration reloaded on server reload.");
+        NoMoreCombatLog.getInstance().getLogger().info("NoMoreCombatLog configuration reloaded on server reloadCommand.");
 
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (p.isOp()){

@@ -25,10 +25,11 @@ public class SafeZoneManager {
         for (Map<?, ?> map : list) {
             String name = (String) map.get("name");
             String world = (String) map.get("world");
-            double x = (double) map.get("x");
-            double y = (double) map.get("y");
-            double z = (double) map.get("z");
-            double radius = (double) map.get("radius");
+
+            double x = ((Number) map.get("x")).doubleValue();
+            double y = ((Number) map.get("y")).doubleValue();
+            double z = ((Number) map.get("z")).doubleValue();
+            double radius = ((Number) map.get("radius")).doubleValue();
 
             zones.add(new SafeZone(name, world, x, y, z, radius));
         }
@@ -50,6 +51,20 @@ public class SafeZoneManager {
 
         plugin.getConfig().set("safe-zones", list);
         plugin.saveConfig();
+    }
+
+    public void addSafeZone(SafeZone zone) {
+        zones.add(zone);
+        saveZones();
+    }
+
+    public void removeSafeZone(SafeZone zone) {
+        zones.remove(zone);
+        saveZones();
+    }
+
+    public List<SafeZone> getZones() {
+        return zones;
     }
 
 }

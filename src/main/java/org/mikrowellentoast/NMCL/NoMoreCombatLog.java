@@ -7,11 +7,13 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.Bukkit;
+import org.mikrowellentoast.NMCL.commands.NmclCommand;
 import org.mikrowellentoast.NMCL.events.ConfigReloadEvent;
 import org.mikrowellentoast.NMCL.listeners.CombatListener;
 import org.mikrowellentoast.NMCL.listeners.CommandListener;
 import org.mikrowellentoast.NMCL.listeners.PortalListener;
 import org.mikrowellentoast.NMCL.listeners.ReloadListener;
+import org.mikrowellentoast.NMCL.utils.SafeZoneManager;
 
 
 import java.io.File;
@@ -22,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 public class NoMoreCombatLog extends JavaPlugin {
 
     private static NoMoreCombatLog instance;
+    private SafeZoneManager safeZoneManager;
 
     @Override
     public void onLoad() {
@@ -31,7 +34,10 @@ public class NoMoreCombatLog extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        CommandAPI.onEnable();
 
+        NmclCommand nmclCommand = new NmclCommand(this);
+        nmclCommand.register();
 
         instance = this;
         saveDefaultConfig();
@@ -39,6 +45,9 @@ public class NoMoreCombatLog extends JavaPlugin {
         checkAndUpdateConfig();
 
         CombatListener combatlistener = new CombatListener();
+
+        safeZoneManager = new SafeZoneManager(this);
+
 
         Bukkit.getPluginManager().registerEvents(combatlistener, this);
         Bukkit.getPluginManager().registerEvents(new ReloadListener(), this);
@@ -62,6 +71,10 @@ public class NoMoreCombatLog extends JavaPlugin {
     public void reloadPluginConfig() {
         instance.reloadConfig();
         Bukkit.getPluginManager().callEvent(new ConfigReloadEvent());
+    }
+
+    public SafeZoneManager getSafeZoneManager() {
+        return safeZoneManager;
     }
 
     public void checkAndUpdateConfig() {

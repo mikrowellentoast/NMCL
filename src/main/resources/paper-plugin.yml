@@ -1,6 +1,29 @@
 name: NoMoreCombatLog
-version: '1.0-SNAPSHOT'
+version: '1.0.3'
 main: org.mikrowellentoast.NMCL.NoMoreCombatLog
 api-version: '1.21.10'
 authors: [ mikrowellentoast ]
 description: A simple and configurable Paper plugin that prevents players from combat logging.
+
+permissions:
+  nomorecombatlog.use:
+    description: Allows use of the AntiCombatLog command
+    default: op
+  nomorecombatlog.reload:
+    description: Allows reloading of the AntiCombatLog configuration
+    default: op
+  nomorecombatlog.bypass:
+    description: Allows bypassing combat logging
+    default: false
+  nomorecombatlog.safezone:
+    description: Allows use of safezone command
+    default: op
+  nomorecombatlog.safezone.bypass:
+    description: Allows bypassing safe zones
+    default: false
+  nomorecombatlog.safezone.add:
+    description: Allows adding safe zones
+    default: op
+  nomorecombatlog.safezone.remove:
+    description: Allows removing safe zones
+    default: op
