@@ -28,7 +28,7 @@ public class NoMoreCombatLog extends JavaPlugin {
 
     @Override
     public void onLoad() {
-        CommandAPI.onLoad(new CommandAPIPaperConfig(this).verboseOutput(true));
+        CommandAPI.onLoad(new CommandAPIPaperConfig(this).verboseOutput(true).silentLogs(true));
     }
 
 
