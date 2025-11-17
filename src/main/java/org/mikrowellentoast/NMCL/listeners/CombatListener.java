@@ -2,6 +2,8 @@ package org.mikrowellentoast.NMCL.listeners;
 
 import org.bukkit.GameMode;
 import org.bukkit.World;
+import org.bukkit.entity.EnderCrystal;
+import org.bukkit.entity.WindCharge;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.mikrowellentoast.NMCL.NoMoreCombatLog;
 
@@ -32,6 +34,7 @@ public class CombatListener implements Listener {
     private long banDuration;
     private List<String> disabled_worlds;
     private boolean safe_zones_enabled;
+    private boolean remove_tag_when_entering_safezone;
 
 
     private int taskId = -1;
@@ -49,6 +52,7 @@ public class CombatListener implements Listener {
         this.banDuration = plugin.getConfig().getLong("ban-duration", 1440);
         this.disabled_worlds = plugin.getConfig().getStringList("disabled-worlds");
         this.safe_zones_enabled = plugin.getConfig().getBoolean("enable-safe-zone", false);
+        this.remove_tag_when_entering_safezone = plugin.getConfig().getBoolean("remove-tag-when-entering-safe-zone", false);
         startActionbarTask();
     }
 
@@ -93,10 +97,19 @@ public class CombatListener implements Listener {
         }
 
         if (safe_zones_enabled && (isInAnySafeZone(victim) || isInAnySafeZone(attacker))) {
-            if (!victim.hasPermission("nomorecombatlog.safezone.bypass")
-                    && !attacker.hasPermission("nomorecombatlog.safezone.bypass")) {
-                event.setCancelled(true);
-                return;
+            if (!victim.hasPermission("nomorecombatlog.safezone.bypass") && !attacker.hasPermission("nomorecombatlog.safezone.bypass")) {
+               if (remove_tag_when_entering_safezone) {
+                   event.setCancelled(true);
+                   return;
+               }
+
+               if (isCombatTagged(victim.getUniqueId()) && isCombatTagged(attacker.getUniqueId())) {
+                   return;
+               }
+
+               event.setCancelled(true);
+               return;
+
             }
         }
 
@@ -178,6 +191,7 @@ public class CombatListener implements Listener {
         this.banDuration = plugin.getConfig().getLong("ban-duration", 1440);
         this.disabled_worlds = plugin.getConfig().getStringList("disabled-worlds");
         this.safe_zones_enabled = plugin.getConfig().getBoolean("enable-safe-zone", false);
+        this.remove_tag_when_entering_safezone = plugin.getConfig().getBoolean("remove-tag-when-entering-safe-zone", false);
         startActionbarTask();
     }
 
@@ -192,8 +206,12 @@ public class CombatListener implements Listener {
 
             if (safe_zones_enabled) {
                 for (Player p : Bukkit.getOnlinePlayers()) {
-                    if (isInAnySafeZone(p)) {
-                        p.sendActionBar("§aYou're in a SafeZone");
+                    if (isInAnySafeZone(p) && (!isCombatTagged(p.getUniqueId()) || remove_tag_when_entering_safezone)) {
+                        p.sendActionBar("§aYou're safe");
+
+                        if (remove_tag_when_entering_safezone && isCombatTagged(p.getUniqueId())) {
+                            combatTagged.remove(p.getUniqueId());
+                        }
 
                     }
                 }
@@ -208,13 +226,11 @@ public class CombatListener implements Listener {
                 Player player = Bukkit.getPlayer(uuid);
 
 
-                System.out.println(isInAnySafeZone(player));
-
                 if (player == null || !player.isOnline()) {
                     continue;
                 }
 
-                if (safe_zones_enabled && isInAnySafeZone(player)) {
+                if (safe_zones_enabled && isInAnySafeZone(player) && remove_tag_when_entering_safezone) {
                     continue;
                 }
 
