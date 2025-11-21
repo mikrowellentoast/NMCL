@@ -2,8 +2,11 @@ package org.mikrowellentoast.NMCL.listeners;
 
 import org.bukkit.GameMode;
 import org.bukkit.World;
+import org.bukkit.damage.DamageSource;
 import org.bukkit.entity.EnderCrystal;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.WindCharge;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.mikrowellentoast.NMCL.NoMoreCombatLog;
 
@@ -70,8 +73,94 @@ public class CombatListener implements Listener {
         }
     }
 
-
     @EventHandler
+    public void onDamage(EntityDamageEvent event) {
+        if (!PLUGIN_ENABLED) {
+            return;
+        }
+
+        DamageSource source = event.getDamageSource();
+
+        EntityDamageEvent.DamageCause damageCause = event.getCause();
+
+        System.out.println(damageCause);
+
+        if (!(event.getEntity() instanceof Player v) || !(source.getCausingEntity() instanceof Player attacker)) {
+            return;
+        }
+
+        if (disabled_worlds.contains(v.getWorld().getName()) || disabled_worlds.contains(attacker.getWorld().getName())) {
+            return;
+        }
+
+        if (v.hasPermission("nomorecombatlog.bypass") || attacker.hasPermission("nomorecombatlog.bypass")) {
+            return;
+        }
+
+        if (!ENABLED_IN_CREATIVE && ((v.getGameMode() == GameMode.CREATIVE || (attacker.getGameMode() == GameMode.CREATIVE)))) {
+            return;
+        }
+
+        if (safe_zones_enabled && (isInAnySafeZone(v) ||isInAnySafeZone(attacker))) {
+            if (!v.hasPermission("nomorecombatlog.safezone.bypass") && !attacker.hasPermission("nomorecombatlog.safezone.bypass")) {
+                if (remove_tag_when_entering_safezone) {
+                    event.setCancelled(true);
+                    return;
+                }
+
+                if (isCombatTagged(v.getUniqueId()) && isCombatTagged(attacker.getUniqueId())) {
+                    long now = System.currentTimeMillis();
+                    if (SET_ATTACKER_ON_COMBAT_ON_RETALIATION && RETALIATION_ONLY) {
+                        combatTagged.put(attacker.getUniqueId(), now);
+                    } else {
+                        combatTagged.put(attacker.getUniqueId(), now);
+                        combatTagged.put(v.getUniqueId(), now);
+                    }
+
+                    return;
+                }
+
+                event.setCancelled(true);
+                return;
+            }
+        }
+
+        long now = System.currentTimeMillis();
+
+        if (SET_ATTACKER_ON_COMBAT_ON_RETALIATION && RETALIATION_ONLY) {
+            combatTagged.put(attacker.getUniqueId(), now);
+        }
+
+        if (RETALIATION_ONLY) {
+
+            retaliationMap.put(attacker.getUniqueId(), new retaliationdata(v.getUniqueId(), now));
+            retaliationdata data = retaliationMap.get(v.getUniqueId());
+            if (data != null && data.attacker.equals(attacker.getUniqueId())) {
+
+                if (now - data.timestamp <= RETALIATION_WINDOW) {
+                    combatTagged.put(v.getUniqueId(), now);
+
+                    if (!SET_ATTACKER_ON_COMBAT_ON_RETALIATION) {
+                        combatTagged.put(attacker.getUniqueId(), now);
+                    }
+
+                }
+
+                retaliationMap.remove(v.getUniqueId());
+            }
+
+        } else {
+            combatTagged.put(v.getUniqueId(), now);
+            combatTagged.put(attacker.getUniqueId(), now);
+        }
+
+
+
+    }
+
+
+
+    /*@EventHandler
     public void onCombat(EntityDamageByEntityEvent event) {
         if (!PLUGIN_ENABLED) {
             return;
@@ -142,7 +231,7 @@ public class CombatListener implements Listener {
             combatTagged.put(attacker.getUniqueId(), now);
         }
 
-    }
+    }*/
 
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {

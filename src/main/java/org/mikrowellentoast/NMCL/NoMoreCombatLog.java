@@ -39,6 +39,7 @@ public class NoMoreCombatLog extends JavaPlugin {
         NmclCommand nmclCommand = new NmclCommand(this);
         nmclCommand.register();
 
+
         instance = this;
         saveDefaultConfig();
 
