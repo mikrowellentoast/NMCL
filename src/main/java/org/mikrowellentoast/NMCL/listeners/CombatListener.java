@@ -1,11 +1,7 @@
 package org.mikrowellentoast.NMCL.listeners;
 
 import org.bukkit.GameMode;
-import org.bukkit.World;
 import org.bukkit.damage.DamageSource;
-import org.bukkit.entity.EnderCrystal;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.WindCharge;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.mikrowellentoast.NMCL.NoMoreCombatLog;
@@ -14,12 +10,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.mikrowellentoast.NMCL.events.ConfigReloadEvent;
 import org.mikrowellentoast.NMCL.utils.SafeZone;
 
-import java.time.Duration;
 import java.util.*;
 
 public class CombatListener implements Listener {
@@ -253,7 +247,6 @@ public class CombatListener implements Listener {
             if (punishmentMethod.equalsIgnoreCase("kill")) {
                 player.setHealth(0.0);
             } else if (punishmentMethod.equalsIgnoreCase("ban")) {
-                String reason = "You have been banned for combat logging.";
                 player.setHealth(0.0);
                 if (banDuration <= 0) {
                     player.ban("You have been banned for combat logging.", (Date) null, null, true);
