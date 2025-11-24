@@ -46,7 +46,11 @@ allow-portal-teleport: false     # Allow portals during combat
 blocked-commands: []             # Commands blocked during combat
 disabled-worlds: # List of worlds where combat logging is disabled
   - world_the_end
-enable-safe-zone: true # Whether to enable safe zones where players are not tagged in combat
+
+enable-safe-zone: false # Whether to enable safe zones where players are not tagged in combat
+
+remove-tag-when-entering-safe-zone: false # When set to true. Combat tag is removed when entering a safe zone
+
 safe-zones:
   - name: spawn
     world: world
