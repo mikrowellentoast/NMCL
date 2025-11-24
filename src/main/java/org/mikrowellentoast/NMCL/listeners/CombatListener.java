@@ -79,36 +79,36 @@ public class CombatListener implements Listener {
 
 
 
-        if (!(event.getEntity() instanceof Player v) || !(source.getCausingEntity() instanceof Player attacker)) {
+        if (!(event.getEntity() instanceof Player victim) || !(source.getCausingEntity() instanceof Player attacker)) {
             return;
         }
 
-        if (disabled_worlds.contains(v.getWorld().getName()) || disabled_worlds.contains(attacker.getWorld().getName())) {
+        if (disabled_worlds.contains(victim.getWorld().getName()) || disabled_worlds.contains(attacker.getWorld().getName())) {
             return;
         }
 
-        if (v.hasPermission("nomorecombatlog.bypass") || attacker.hasPermission("nomorecombatlog.bypass")) {
+        if (victim.hasPermission("nomorecombatlog.bypass") || attacker.hasPermission("nomorecombatlog.bypass")) {
             return;
         }
 
-        if (!ENABLED_IN_CREATIVE && ((v.getGameMode() == GameMode.CREATIVE || (attacker.getGameMode() == GameMode.CREATIVE)))) {
+        if (!ENABLED_IN_CREATIVE && ((victim.getGameMode() == GameMode.CREATIVE || (attacker.getGameMode() == GameMode.CREATIVE)))) {
             return;
         }
 
-        if (safe_zones_enabled && (isInAnySafeZone(v) ||isInAnySafeZone(attacker))) {
-            if (!v.hasPermission("nomorecombatlog.safezone.bypass") && !attacker.hasPermission("nomorecombatlog.safezone.bypass")) {
+        if (safe_zones_enabled && (isInAnySafeZone(victim) ||isInAnySafeZone(attacker))) {
+            if (!victim.hasPermission("nomorecombatlog.safezone.bypass") && !attacker.hasPermission("nomorecombatlog.safezone.bypass")) {
                 if (remove_tag_when_entering_safezone) {
                     event.setCancelled(true);
                     return;
                 }
 
-                if (isCombatTagged(v.getUniqueId()) && isCombatTagged(attacker.getUniqueId())) {
+                if (isCombatTagged(victim.getUniqueId()) && isCombatTagged(attacker.getUniqueId())) {
                     long now = System.currentTimeMillis();
                     if (RETALIATION_ONLY && SET_ATTACKER_ON_COMBAT_ON_RETALIATION) {
                         combatTagged.put(attacker.getUniqueId(), now);
                     } else {
                         combatTagged.put(attacker.getUniqueId(), now);
-                        combatTagged.put(v.getUniqueId(), now);
+                        combatTagged.put(victim.getUniqueId(), now);
                     }
 
                     return;
@@ -121,18 +121,20 @@ public class CombatListener implements Listener {
 
         long now = System.currentTimeMillis();
 
-        if (SET_ATTACKER_ON_COMBAT_ON_RETALIATION && RETALIATION_ONLY) {
-            combatTagged.put(attacker.getUniqueId(), now);
-        }
+
 
         if (RETALIATION_ONLY) {
 
-            retaliationMap.put(attacker.getUniqueId(), new retaliationdata(v.getUniqueId(), now));
-            retaliationdata data = retaliationMap.get(v.getUniqueId());
+            if (SET_ATTACKER_ON_COMBAT_ON_RETALIATION) {
+                combatTagged.put(attacker.getUniqueId(), now);
+            }
+
+            retaliationMap.put(attacker.getUniqueId(), new retaliationdata(victim.getUniqueId(), now));
+            retaliationdata data = retaliationMap.get(victim.getUniqueId());
             if (data != null && data.attacker.equals(attacker.getUniqueId())) {
 
                 if (now - data.timestamp <= RETALIATION_WINDOW) {
-                    combatTagged.put(v.getUniqueId(), now);
+                    combatTagged.put(victim.getUniqueId(), now);
 
                     if (!SET_ATTACKER_ON_COMBAT_ON_RETALIATION) {
                         combatTagged.put(attacker.getUniqueId(), now);
@@ -140,11 +142,11 @@ public class CombatListener implements Listener {
 
                 }
 
-                retaliationMap.remove(v.getUniqueId());
+                retaliationMap.remove(victim.getUniqueId());
             }
 
         } else {
-            combatTagged.put(v.getUniqueId(), now);
+            combatTagged.put(victim.getUniqueId(), now);
             combatTagged.put(attacker.getUniqueId(), now);
         }
 
