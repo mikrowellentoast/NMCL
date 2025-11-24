@@ -77,7 +77,7 @@ public class CombatListener implements Listener {
 
         EntityDamageEvent.DamageCause damageCause = event.getCause();
 
-        System.out.println(damageCause);
+
 
         if (!(event.getEntity() instanceof Player v) || !(source.getCausingEntity() instanceof Player attacker)) {
             return;
