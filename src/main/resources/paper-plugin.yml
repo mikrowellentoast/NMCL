@@ -1,5 +1,5 @@
 name: NoMoreCombatLog
-version: '1.0.3'
+version: '1.0.4.2'
 main: org.mikrowellentoast.NMCL.NoMoreCombatLog
 api-version: '1.21.10'
 authors: [ mikrowellentoast ]

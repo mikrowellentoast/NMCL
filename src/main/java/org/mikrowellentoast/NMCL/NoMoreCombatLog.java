@@ -9,11 +9,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.Bukkit;
 import org.mikrowellentoast.NMCL.commands.NmclCommand;
 import org.mikrowellentoast.NMCL.events.ConfigReloadEvent;
-import org.mikrowellentoast.NMCL.listeners.CombatListener;
-import org.mikrowellentoast.NMCL.listeners.CommandListener;
-import org.mikrowellentoast.NMCL.listeners.PortalListener;
-import org.mikrowellentoast.NMCL.listeners.ReloadListener;
+import org.mikrowellentoast.NMCL.listeners.*;
 import org.mikrowellentoast.NMCL.utils.SafeZoneManager;
+import org.mikrowellentoast.NMCL.utils.UpdateChecker;
 
 
 import java.io.File;
@@ -25,6 +23,8 @@ public class NoMoreCombatLog extends JavaPlugin {
 
     private static NoMoreCombatLog instance;
     private SafeZoneManager safeZoneManager;
+
+    private String update_available = null;
 
     @Override
     public void onLoad() {
@@ -47,9 +47,14 @@ public class NoMoreCombatLog extends JavaPlugin {
 
         CombatListener combatlistener = new CombatListener();
 
+        PlayerJoinListener playerjoinListener = new PlayerJoinListener();
+
         safeZoneManager = new SafeZoneManager(this);
 
+        new UpdateChecker().checkForUpdates();
 
+
+        Bukkit.getPluginManager().registerEvents(playerjoinListener, this);
         Bukkit.getPluginManager().registerEvents(combatlistener, this);
         Bukkit.getPluginManager().registerEvents(new ReloadListener(), this);
         Bukkit.getPluginManager().registerEvents(new PortalListener(combatlistener), this);
@@ -57,11 +62,6 @@ public class NoMoreCombatLog extends JavaPlugin {
 
 
         getLogger().info("NoMoreCombatLog has been enabled.");
-
-    }
-
-    @Override
-    public void onDisable() {
 
     }
 
@@ -120,4 +120,17 @@ public class NoMoreCombatLog extends JavaPlugin {
 
 
     }
+
+    public String getUpdate_available() {
+        return update_available;
+    }
+
+    public void setUpdate_available(String update_available) {
+        this.update_available = update_available;
+    }
+
+    public boolean hasUpdate() {
+        return this.update_available != null;
+    }
+
 }
