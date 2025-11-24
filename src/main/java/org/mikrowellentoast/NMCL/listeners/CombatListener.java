@@ -104,7 +104,7 @@ public class CombatListener implements Listener {
 
                 if (isCombatTagged(v.getUniqueId()) && isCombatTagged(attacker.getUniqueId())) {
                     long now = System.currentTimeMillis();
-                    if (SET_ATTACKER_ON_COMBAT_ON_RETALIATION && RETALIATION_ONLY) {
+                    if (RETALIATION_ONLY && SET_ATTACKER_ON_COMBAT_ON_RETALIATION) {
                         combatTagged.put(attacker.getUniqueId(), now);
                     } else {
                         combatTagged.put(attacker.getUniqueId(), now);
