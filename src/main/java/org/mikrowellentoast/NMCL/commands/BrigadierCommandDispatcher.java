@@ -12,6 +12,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.mikrowellentoast.NMCL.NoMoreCombatLog;
+import org.mikrowellentoast.NMCL.config.ConfigManager;
 import org.mikrowellentoast.NMCL.utils.SafeZone;
 
 import java.util.Collections;
@@ -19,6 +20,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class BrigadierCommandDispatcher implements CommandExecutor {
+
+    private final ConfigManager config = ConfigManager.getInstance();
 
     private final NoMoreCombatLog plugin;
     private final CommandDispatcher<CommandSender> dispatcher;
@@ -186,6 +189,11 @@ public class BrigadierCommandDispatcher implements CommandExecutor {
             return 0;
         }
 
+        if (!(config.areSafeZonesEnabled())) {
+            sender.sendMessage("§cSafezones are disabled in the configuration.");
+            return 0;
+        }
+
         String name = StringArgumentType.getString(context, "name");
         double radius = DoubleArgumentType.getDouble(context, "radius");
 
@@ -215,6 +223,11 @@ public class BrigadierCommandDispatcher implements CommandExecutor {
     private int executeSafeZoneList(CommandContext<CommandSender> context) {
         CommandSender sender = context.getSource();
 
+        if (!(config.areSafeZonesEnabled())) {
+            sender.sendMessage("§cSafezones are disabled in the configuration.");
+            return 0;
+        }
+
         if (plugin.getSafeZoneManager().getZones().isEmpty()) {
             sender.sendMessage("§7No safezones have been created.");
             return 0;
@@ -229,6 +242,11 @@ public class BrigadierCommandDispatcher implements CommandExecutor {
 
     private int executeSafeZoneRemove(CommandContext<CommandSender> context) {
         CommandSender sender = context.getSource();
+
+        if (!(config.areSafeZonesEnabled())) {
+            sender.sendMessage("§cSafezones are disabled in the configuration.");
+            return 0;
+        }
 
         String name = StringArgumentType.getString(context, "name");
         SafeZone sz = plugin.getSafeZoneManager().getZones().stream()
