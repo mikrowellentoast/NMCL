@@ -177,7 +177,7 @@ public class BrigadierCommandDispatcher implements CommandExecutor {
     private int executeReload(CommandContext<CommandSender> context) {
         CommandSender sender = context.getSource();
         plugin.reloadPluginConfig();
-        sender.sendMessage("§aNoMoreCombatLog configuration reloaded.");
+        sender.sendMessage("§e[NoMoreCombatLog] §aconfiguration reloaded.");
         return 1;
     }
 
@@ -216,7 +216,7 @@ public class BrigadierCommandDispatcher implements CommandExecutor {
         );
 
         plugin.getSafeZoneManager().addSafeZone(sz);
-        player.sendMessage("§aSafe zone '" + name + "' added with radius " + radius + " at your current location.");
+        player.sendMessage("§aSafe zone §e" + name + " §aadded with radius §e" + radius + " §aat your current location.");
         return 1;
     }
 
