@@ -48,7 +48,6 @@ public class ConfigManager {
 
     private void loadConfig() {
         FileConfiguration config = plugin.getConfig();
-        System.out.println("Config: Loading config...");
 
         this.combatTagDuration = config.getLong("combat-tag-duration", 15) * 1000;
         this.enabledInCreative = config.getBoolean("enable-in-creative", false);
