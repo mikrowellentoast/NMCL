@@ -1,7 +1,9 @@
 package org.mikrowellentoast.NMCL.config;
 
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.event.Event;
 import org.mikrowellentoast.NMCL.NoMoreCombatLog;
+import org.mikrowellentoast.NMCL.events.ConfigReloadEvent;
 
 import java.util.List;
 
@@ -46,6 +48,7 @@ public class ConfigManager {
 
     private void loadConfig() {
         FileConfiguration config = plugin.getConfig();
+        System.out.println("Config: Loading config...");
 
         this.combatTagDuration = config.getLong("combat-tag-duration", 15) * 1000;
         this.enabledInCreative = config.getBoolean("enable-in-creative", false);
@@ -60,6 +63,7 @@ public class ConfigManager {
         this.removeTagWhenEnteringSafezone = config.getBoolean("remove-tag-when-entering-safe-zone", false);
         this.blockedCommands = config.getStringList("blocked-commands");
         this.allowPortalInCombat = config.getBoolean("allow-portal-teleport", true);
+
     }
 
     public long getCombatTagDuration() {

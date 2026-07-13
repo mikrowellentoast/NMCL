@@ -1,7 +1,7 @@
 name: NoMoreCombatLog
 version: '${version}'
 main: org.mikrowellentoast.NMCL.NoMoreCombatLog
-api-version: '1.21'
+api-version: '26.2'
 authors: [ mikrowellentoast ]
 description: A simple and configurable Paper plugin that prevents players from combat logging.
 

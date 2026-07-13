@@ -18,7 +18,7 @@ public class ReloadListener implements Listener {
 
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (p.isOp()){
-                p.sendMessage("§a[NoMoreCombatLog] Configuration reloaded");
+                p.sendMessage("§e[NoMoreCombatLog] §aConfiguration reloaded");
             }
         }
     }
