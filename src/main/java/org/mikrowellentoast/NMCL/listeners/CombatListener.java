@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.mikrowellentoast.NMCL.config.ConfigManager;
 import org.mikrowellentoast.NMCL.events.ConfigReloadEvent;
 import org.mikrowellentoast.NMCL.utils.SafeZone;
 
@@ -21,35 +22,11 @@ public class CombatListener implements Listener {
     private final HashMap<UUID, Long> combatTagged = new HashMap<>();
     private final HashMap<UUID, retaliationdata> retaliationMap = new HashMap<>();
     private final NoMoreCombatLog plugin = NoMoreCombatLog.getInstance();
-    private long COMBAT_TAG_DURATION;
-    private boolean ENABLED_IN_CREATIVE;
-    private boolean PLUGIN_ENABLED;
-    private boolean RETALIATION_ONLY;
-    private long RETALIATION_WINDOW;
-    private boolean SET_ATTACKER_ON_COMBAT_ON_RETALIATION;
-    private String punishmentMethod;
-    private long banDuration;
-    private List<String> disabled_worlds;
-    private boolean safe_zones_enabled;
-    private boolean remove_tag_when_entering_safezone;
-
+    private final ConfigManager config = ConfigManager.getInstance();
 
     private int taskId = -1;
 
-
-
     public CombatListener() {
-        this.COMBAT_TAG_DURATION = plugin.getConfig().getLong("combat-tag-duration", 15) * 1000;
-        this.ENABLED_IN_CREATIVE = plugin.getConfig().getBoolean("enable-in-creative", false);
-        this.PLUGIN_ENABLED = plugin.getConfig().getBoolean("enabled", true);
-        this.RETALIATION_ONLY = plugin.getConfig().getBoolean("retaliation-attack", false);
-        this.RETALIATION_WINDOW = plugin.getConfig().getLong("retaliation-attack-duration", 10) * 1000;
-        this.SET_ATTACKER_ON_COMBAT_ON_RETALIATION = plugin.getConfig().getBoolean("set-attacker-on-combat", true);
-        this.punishmentMethod = plugin.getConfig().getString("punishment-method", "kill");
-        this.banDuration = plugin.getConfig().getLong("ban-duration", 1440);
-        this.disabled_worlds = plugin.getConfig().getStringList("disabled-worlds");
-        this.safe_zones_enabled = plugin.getConfig().getBoolean("enable-safe-zone", false);
-        this.remove_tag_when_entering_safezone = plugin.getConfig().getBoolean("remove-tag-when-entering-safe-zone", false);
         startActionbarTask();
     }
 
@@ -69,22 +46,19 @@ public class CombatListener implements Listener {
 
     @EventHandler
     public void onDamage(EntityDamageEvent event) {
-        if (!PLUGIN_ENABLED) {
+        if (!config.isPluginEnabled()) {
             return;
         }
 
         DamageSource source = event.getDamageSource();
-
         EntityDamageEvent.DamageCause damageCause = event.getCause();
-
-
-
 
         if (!(event.getEntity() instanceof Player victim) || !(source.getCausingEntity() instanceof Player attacker)) {
             return;
         }
 
-        if (disabled_worlds.contains(victim.getWorld().getName()) || disabled_worlds.contains(attacker.getWorld().getName())) {
+        if (config.getDisabledWorlds().contains(victim.getWorld().getName()) || 
+            config.getDisabledWorlds().contains(attacker.getWorld().getName())) {
             return;
         }
 
@@ -92,143 +66,62 @@ public class CombatListener implements Listener {
             return;
         }
 
-        if (!ENABLED_IN_CREATIVE && ((victim.getGameMode() == GameMode.CREATIVE || (attacker.getGameMode() == GameMode.CREATIVE)))) {
+        if (!config.isEnabledInCreative() && ((victim.getGameMode() == GameMode.CREATIVE || (attacker.getGameMode() == GameMode.CREATIVE)))) {
             return;
         }
 
-        if (safe_zones_enabled && (isInAnySafeZone(victim) ||isInAnySafeZone(attacker))) {
+        if (config.areSafeZonesEnabled() && (isInAnySafeZone(victim) || isInAnySafeZone(attacker))) {
             if (!victim.hasPermission("nomorecombatlog.safezone.bypass") && !attacker.hasPermission("nomorecombatlog.safezone.bypass")) {
-                if (remove_tag_when_entering_safezone) {
-                    event.setCancelled(true);
-                    return;
-                }
-
-                if (isCombatTagged(victim.getUniqueId()) && isCombatTagged(attacker.getUniqueId())) {
-                    long now = System.currentTimeMillis();
-                    if (RETALIATION_ONLY && SET_ATTACKER_ON_COMBAT_ON_RETALIATION) {
-                        combatTagged.put(attacker.getUniqueId(), now);
-                    } else {
-                        combatTagged.put(attacker.getUniqueId(), now);
-                        combatTagged.put(victim.getUniqueId(), now);
-                    }
-
-                    return;
-                }
-
-                event.setCancelled(true);
-                return;
-            }
-        }
-
-        long now = System.currentTimeMillis();
-
-
-
-        if (RETALIATION_ONLY) {
-
-            if (SET_ATTACKER_ON_COMBAT_ON_RETALIATION) {
-                combatTagged.put(attacker.getUniqueId(), now);
-            }
-
-            retaliationMap.put(attacker.getUniqueId(), new retaliationdata(victim.getUniqueId(), now));
-            retaliationdata data = retaliationMap.get(victim.getUniqueId());
-            if (data != null && data.attacker.equals(attacker.getUniqueId())) {
-
-                if (now - data.timestamp <= RETALIATION_WINDOW) {
-                    combatTagged.put(victim.getUniqueId(), now);
-
-                    if (!SET_ATTACKER_ON_COMBAT_ON_RETALIATION) {
-                        combatTagged.put(attacker.getUniqueId(), now);
-                    }
-
-                }
-
-                retaliationMap.remove(victim.getUniqueId());
-            }
-
-        } else {
-            combatTagged.put(victim.getUniqueId(), now);
-            combatTagged.put(attacker.getUniqueId(), now);
-        }
-
-
-
-    }
-
-
-
-    /*@EventHandler
-    public void onCombat(EntityDamageByEntityEvent event) {
-        if (!PLUGIN_ENABLED) {
-            return;
-        }
-
-
-
-        if(!(event.getEntity() instanceof Player victim) || !(event.getDamager() instanceof Player attacker)) {
-            return;
-        }
-
-
-        if (disabled_worlds.contains(victim.getWorld().getName()) || disabled_worlds.contains(attacker.getWorld().getName())) {
-            return;
-        }
-
-        if (victim.hasPermission("nomorecombatlog.bypass") || attacker.hasPermission("nomorecombatlog.bypass")) {
-            return;
-        }
-
-        if (!ENABLED_IN_CREATIVE && (victim.getGameMode() == GameMode.CREATIVE || attacker.getGameMode() == GameMode.CREATIVE)) {
-            return;
-        }
-
-        if (safe_zones_enabled && (isInAnySafeZone(victim) || isInAnySafeZone(attacker))) {
-            if (!victim.hasPermission("nomorecombatlog.safezone.bypass") && !attacker.hasPermission("nomorecombatlog.safezone.bypass")) {
-               if (remove_tag_when_entering_safezone) {
+               if (config.shouldRemoveTagWhenEnteringSafezone()) {
                    event.setCancelled(true);
                    return;
                }
 
                if (isCombatTagged(victim.getUniqueId()) && isCombatTagged(attacker.getUniqueId())) {
+                   long now = System.currentTimeMillis();
+                   if (config.isRetaliationOnly() && config.isSetAttackerOnCombatOnRetaliation()) {
+                       combatTagged.put(attacker.getUniqueId(), now);
+                   } else {
+                       combatTagged.put(attacker.getUniqueId(), now);
+                       combatTagged.put(victim.getUniqueId(), now);
+                   }
+
                    return;
                }
 
                event.setCancelled(true);
                return;
-
             }
         }
 
         long now = System.currentTimeMillis();
 
-        if (SET_ATTACKER_ON_COMBAT_ON_RETALIATION && RETALIATION_ONLY) {
-            combatTagged.put(attacker.getUniqueId(), now);
-        }
-
-        if (RETALIATION_ONLY) {
+        if (config.isRetaliationOnly()) {
+            if (config.isSetAttackerOnCombatOnRetaliation()) {
+               combatTagged.put(attacker.getUniqueId(), now);
+            }
 
             retaliationMap.put(attacker.getUniqueId(), new retaliationdata(victim.getUniqueId(), now));
             retaliationdata data = retaliationMap.get(victim.getUniqueId());
             if (data != null && data.attacker.equals(attacker.getUniqueId())) {
 
-                if (now - data.timestamp <= RETALIATION_WINDOW) {
-                    combatTagged.put(victim.getUniqueId(), now);
+               if (now - data.timestamp <= config.getRetaliationWindow()) {
+                   combatTagged.put(victim.getUniqueId(), now);
 
-                    if (!SET_ATTACKER_ON_COMBAT_ON_RETALIATION) {
-                        combatTagged.put(attacker.getUniqueId(), now);
-                    }
+                   if (!config.isSetAttackerOnCombatOnRetaliation()) {
+                       combatTagged.put(attacker.getUniqueId(), now);
+                   }
 
-                }
+               }
 
-                retaliationMap.remove(victim.getUniqueId());
+               retaliationMap.remove(victim.getUniqueId());
             }
 
         } else {
             combatTagged.put(victim.getUniqueId(), now);
             combatTagged.put(attacker.getUniqueId(), now);
         }
-
-    }*/
+    }
 
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
@@ -244,20 +137,22 @@ public class CombatListener implements Listener {
         Player player = event.getPlayer();
         Long lastTagged = combatTagged.get(player.getUniqueId());
 
-        long duration = COMBAT_TAG_DURATION;
+        long duration = config.getCombatTagDuration();
         if (lastTagged != null && now - lastTagged < duration) {
             combatTagged.remove(player.getUniqueId());
+            String punishmentMethod = config.getPunishmentMethod();
             if (punishmentMethod.equalsIgnoreCase("kill")) {
-                player.setHealth(0.0);
+               player.setHealth(0.0);
             } else if (punishmentMethod.equalsIgnoreCase("ban")) {
-                player.setHealth(0.0);
-                if (banDuration <= 0) {
-                    player.ban("You have been banned for combat logging.", (Date) null, null, true);
-                } else {
-                    long banMillis = System.currentTimeMillis() + (banDuration * 60 * 1000);
-                    Date banDate = new Date(banMillis);
-                    player.ban("You have been banned for combat logging.",banDate, null, true);
-                }
+               player.setHealth(0.0);
+               long banDuration = config.getBanDuration();
+               if (banDuration <= 0) {
+                   player.ban("You have been banned for combat logging.", (Date) null, null, true);
+               } else {
+                   long banMillis = System.currentTimeMillis() + (banDuration * 60 * 1000);
+                   Date banDate = new Date(banMillis);
+                   player.ban("You have been banned for combat logging.", banDate, null, true);
+               }
 
             }
         }
@@ -265,18 +160,6 @@ public class CombatListener implements Listener {
 
     @EventHandler
     private void onConfigReload(ConfigReloadEvent event) {
-
-        this.COMBAT_TAG_DURATION = plugin.getConfig().getLong("combat-tag-duration", 15) * 1000;
-        this.ENABLED_IN_CREATIVE = plugin.getConfig().getBoolean("enable-in-creative", false);
-        this.PLUGIN_ENABLED = plugin.getConfig().getBoolean("enabled", true);
-        this.RETALIATION_ONLY = plugin.getConfig().getBoolean("retaliationattack", false);
-        this.RETALIATION_WINDOW = plugin.getConfig().getLong("retaliation-window", 10) * 1000;
-        this.SET_ATTACKER_ON_COMBAT_ON_RETALIATION = plugin.getConfig().getBoolean("set-attacker-on-combat", true);
-        this.punishmentMethod = plugin.getConfig().getString("punishment-method", "kill");
-        this.banDuration = plugin.getConfig().getLong("ban-duration", 1440);
-        this.disabled_worlds = plugin.getConfig().getStringList("disabled-worlds");
-        this.safe_zones_enabled = plugin.getConfig().getBoolean("enable-safe-zone", false);
-        this.remove_tag_when_entering_safezone = plugin.getConfig().getBoolean("remove-tag-when-entering-safe-zone", false);
         startActionbarTask();
     }
 
@@ -289,45 +172,45 @@ public class CombatListener implements Listener {
             long currentTime = System.currentTimeMillis();
             Iterator<Map.Entry<UUID, Long>> it = combatTagged.entrySet().iterator();
 
-            if (safe_zones_enabled) {
-                for (Player p : Bukkit.getOnlinePlayers()) {
-                    if (isInAnySafeZone(p) && (!isCombatTagged(p.getUniqueId()) || remove_tag_when_entering_safezone)) {
-                        p.sendActionBar("§aYou're safe");
+            if (config.areSafeZonesEnabled()) {
+               for (Player p : Bukkit.getOnlinePlayers()) {
+                   if (isInAnySafeZone(p) && (!isCombatTagged(p.getUniqueId()) || config.shouldRemoveTagWhenEnteringSafezone())) {
+                       p.sendActionBar("§aYou're safe");
 
-                        if (remove_tag_when_entering_safezone && isCombatTagged(p.getUniqueId())) {
-                            combatTagged.remove(p.getUniqueId());
-                        }
+                       if (config.shouldRemoveTagWhenEnteringSafezone() && isCombatTagged(p.getUniqueId())) {
+                           combatTagged.remove(p.getUniqueId());
+                       }
 
-                    }
-                }
+                   }
+               }
             }
 
             while (it.hasNext()) {
-                Map.Entry<UUID, Long> entry = it.next();
-                UUID uuid = entry.getKey();
-                long lastCombat = entry.getValue();
-                long elapsed = currentTime - lastCombat;
-                long remaining = COMBAT_TAG_DURATION - elapsed;
-                Player player = Bukkit.getPlayer(uuid);
+               Map.Entry<UUID, Long> entry = it.next();
+               UUID uuid = entry.getKey();
+               long lastCombat = entry.getValue();
+               long elapsed = currentTime - lastCombat;
+               long remaining = config.getCombatTagDuration() - elapsed;
+               Player player = Bukkit.getPlayer(uuid);
 
 
-                if (player == null || !player.isOnline()) {
-                    continue;
-                }
+               if (player == null || !player.isOnline()) {
+                   continue;
+               }
 
-                if (safe_zones_enabled && isInAnySafeZone(player) && remove_tag_when_entering_safezone) {
-                    continue;
-                }
+               if (config.areSafeZonesEnabled() && isInAnySafeZone(player) && config.shouldRemoveTagWhenEnteringSafezone()) {
+                   continue;
+               }
 
 
-                if (remaining <= 0) {
-                    it.remove();
-                    player.sendActionBar("§cYou're no longer in combat.");
-                    continue;
-                }
+               if (remaining <= 0) {
+                   it.remove();
+                   player.sendActionBar("§cYou're no longer in combat.");
+                   continue;
+               }
 
-                long seconds = (remaining + 999) / 1000;
-                player.sendActionBar("§cCombat: §e" + seconds + "s");
+               long seconds = (remaining + 999) / 1000;
+               player.sendActionBar("§cCombat: §e" + seconds + "s");
             }
         }, 0L, 20L).getTaskId();
     }
@@ -335,14 +218,9 @@ public class CombatListener implements Listener {
     private boolean isInAnySafeZone(Player player) {
         for (SafeZone sz : plugin.getSafeZoneManager().getZones()) {
             if (sz.isInSafeZone(player.getLocation())) {
-                return true;
+               return true;
             }
         }
         return false;
     }
-
-
-
 }
-
-

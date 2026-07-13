@@ -1,13 +1,12 @@
 package org.mikrowellentoast.NMCL;
 
 
-import dev.jorel.commandapi.CommandAPI;
-import dev.jorel.commandapi.CommandAPIPaperConfig;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.Bukkit;
-import org.mikrowellentoast.NMCL.commands.NmclCommand;
+import org.mikrowellentoast.NMCL.commands.BrigadierCommandDispatcher;
+import org.mikrowellentoast.NMCL.config.ConfigManager;
 import org.mikrowellentoast.NMCL.events.ConfigReloadEvent;
 import org.mikrowellentoast.NMCL.listeners.*;
 import org.mikrowellentoast.NMCL.utils.SafeZoneManager;
@@ -26,24 +25,16 @@ public class NoMoreCombatLog extends JavaPlugin {
 
     private String update_available = null;
 
-    @Override
-    public void onLoad() {
-        CommandAPI.onLoad(new CommandAPIPaperConfig(this).verboseOutput(true).silentLogs(true));
-    }
-
 
     @Override
     public void onEnable() {
-        CommandAPI.onEnable();
-
-        NmclCommand nmclCommand = new NmclCommand(this);
-        nmclCommand.register();
-
-
         instance = this;
         saveDefaultConfig();
-
         checkAndUpdateConfig();
+
+        ConfigManager.initialize(this);
+        BrigadierCommandDispatcher commandDispatcher = new BrigadierCommandDispatcher(this);
+        commandDispatcher.register();
 
         CombatListener combatlistener = new CombatListener();
 
@@ -71,6 +62,7 @@ public class NoMoreCombatLog extends JavaPlugin {
 
     public void reloadPluginConfig() {
         instance.reloadConfig();
+        ConfigManager.getInstance().reload();
         Bukkit.getPluginManager().callEvent(new ConfigReloadEvent());
     }
 

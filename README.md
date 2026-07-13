@@ -50,14 +50,6 @@ disabled-worlds: # List of worlds where combat logging is disabled
 enable-safe-zone: false # Whether to enable safe zones where players are not tagged in combat
 
 remove-tag-when-entering-safe-zone: false # When set to true. Combat tag is removed when entering a safe zone
-
-safe-zones:
-  - name: spawn
-    world: world
-    x: 0
-    y: 64
-    z: 0
-    radius: 20.0
 ```
 
 ## Commands
@@ -74,7 +66,6 @@ safe-zones:
 ## Permissions
 | Permission                | Description                   |
 |---------------------------|-------------------------------|
-| `nomorecombatlog.use`     | Allows use of the `/nmcl` command. |
 | `nomorecombatlog.reload`  | Allows use of the `/nmcl reload` command. |
 | `nomorecombatlog.bypass` | Bypass combat logging         |
 | `nomorecombatlog.safezone.add` | Allows adding safezones |
