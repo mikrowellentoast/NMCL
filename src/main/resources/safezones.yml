@@ -1,5 +1,3 @@
-# SafeZones Configuration
-# Safezones are stored in this dedicated file to keep data separate from plugin settings.
 # Players in these zones will not be tagged in combat (if enable-safe-zone is true in config.yml)
 
 safe-zones:
