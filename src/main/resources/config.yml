@@ -13,6 +13,8 @@ set-attacker-on-combat: true # Whether to set the attacker as in combat when the
 
 allow-portal-teleport: false # Whether to allow teleporting via portals while in combat
 
+allow-enderpearl-teleport: false # Whether to allow teleporting via ender pearls while in combat
+
 blocked-commands: #List of commands that are disabled during combat (without slash)
   - "home"
   - "spawn"
