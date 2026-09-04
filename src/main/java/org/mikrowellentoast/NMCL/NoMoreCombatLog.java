@@ -50,6 +50,7 @@ public class NoMoreCombatLog extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new ReloadListener(), this);
         Bukkit.getPluginManager().registerEvents(new PortalListener(combatlistener), this);
         Bukkit.getPluginManager().registerEvents(new CommandListener(combatlistener), this);
+        Bukkit.getPluginManager().registerEvents(new PlayerTeleport(combatlistener), this);
 
 
         getLogger().info("NoMoreCombatLog has been enabled.");
