@@ -23,6 +23,7 @@ public class ConfigManager {
     private boolean removeTagWhenEnteringSafezone;
     private List<String> blockedCommands;
     private boolean allowPortalInCombat;
+    private boolean allowEnderPearlInCombat;
 
     private ConfigManager(NoMoreCombatLog plugin) {
         this.plugin = plugin;
@@ -60,6 +61,7 @@ public class ConfigManager {
         this.removeTagWhenEnteringSafezone = config.getBoolean("remove-tag-when-entering-safe-zone", false);
         this.blockedCommands = config.getStringList("blocked-commands");
         this.allowPortalInCombat = config.getBoolean("allow-portal-teleport", true);
+        this.allowEnderPearlInCombat = config.getBoolean("allow-enderpearl-teleport", false);
     }
 
     public long getCombatTagDuration() {
@@ -112,5 +114,9 @@ public class ConfigManager {
 
     public boolean isAllowPortalInCombat() {
         return allowPortalInCombat;
+    }
+
+    public boolean isAllowEnderPearlInCombat() {
+        return allowEnderPearlInCombat;
     }
 }
