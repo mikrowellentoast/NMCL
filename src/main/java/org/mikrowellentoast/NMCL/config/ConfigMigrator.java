@@ -16,7 +16,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class ConfigMigrator {
-    public static final int CURRENT_VERSION = 2;
+    public static final int CURRENT_VERSION = 3;
     private final NoMoreCombatLog plugin;
     public ConfigMigrator(NoMoreCombatLog plugin) { this.plugin = plugin; }
 
@@ -26,18 +26,24 @@ public final class ConfigMigrator {
         int version = config.getInt("config-version", 0);
         if (version >= CURRENT_VERSION) return;
         backup(file, version);
-        migrateLegacySafeZones(config);
-        for (var entry : ConfigMigrationRules.legacyMappings().entrySet()) {
-            if (config.contains(entry.getKey()) && !config.contains(entry.getValue())) {
-                Object value = config.get(entry.getKey());
-                if ((entry.getKey().contains("duration") || entry.getKey().equals("retaliation-window")) && value instanceof Number number) {
-                    value = number.longValue() + "s";
+        if (version < 2) {
+            migrateLegacySafeZones(config);
+            for (var entry : ConfigMigrationRules.legacyMappings().entrySet()) {
+                if (config.contains(entry.getKey()) && !config.contains(entry.getValue())) {
+                    Object value = config.get(entry.getKey());
+                    if ((entry.getKey().contains("duration") || entry.getKey().equals("retaliation-window")) && value instanceof Number number) {
+                        value = number.longValue() + "s";
+                    }
+                    config.set(entry.getValue(), value);
+                    plugin.getLogger().info("Migrated config key '" + entry.getKey() + "' to '" + entry.getValue() + "'.");
                 }
-                config.set(entry.getValue(), value);
-                plugin.getLogger().info("Migrated config key '" + entry.getKey() + "' to '" + entry.getValue() + "'.");
             }
+            migrateLegacyPunishment(config);
         }
-        migrateLegacyPunishment(config);
+        if (config.contains("persistence", true)) {
+            config.set("persistence", null);
+            plugin.getLogger().info("Removed obsolete 'persistence' configuration section; combat persistence is now always enabled.");
+        }
         try (var stream = plugin.getResource("config.yml")) {
             if (stream != null) {
                 YamlConfiguration defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(stream, StandardCharsets.UTF_8));

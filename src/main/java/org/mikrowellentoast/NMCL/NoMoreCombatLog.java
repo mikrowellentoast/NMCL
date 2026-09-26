@@ -60,7 +60,7 @@ public final class NoMoreCombatLog extends JavaPlugin {
         CombatEligibility eligibility = new CombatEligibility(configManager, safeZoneManager, gracePeriods);
         api = new NMCLApiImpl(combatManager);
         Bukkit.getServicesManager().register(NMCLApi.class, api, this, ServicePriority.Normal);
-        if (configManager.settings().enabled() && configManager.settings().persistenceEnabled()) combatManager.restore(combatStorage.load());
+        combatManager.restore(combatStorage.load());
 
         Bukkit.getPluginManager().registerEvents(new CombatEventListener(this, configManager, combatManager,
                 eligibility, safeZoneManager, messageManager, retaliation), this);
@@ -85,8 +85,7 @@ public final class NoMoreCombatLog extends JavaPlugin {
     @Override public void onDisable() {
         shuttingDown = true;
         if (serviceTask != null) serviceTask.cancel();
-        if (combatStorage != null && combatManager != null && configManager.settings().enabled()
-                && configManager.settings().persistenceEnabled()) {
+        if (combatStorage != null && combatManager != null) {
             combatStorage.saveNow(combatManager.getActiveTags());
         }
         if (displayManager != null) displayManager.hideAll();

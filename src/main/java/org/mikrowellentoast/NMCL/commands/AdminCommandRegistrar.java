@@ -8,6 +8,7 @@ import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -56,8 +57,8 @@ public final class AdminCommandRegistrar {
         root.then(playerCommand("untag", "nomorecombatlog.admin.untag", this::untag));
         root.then(playerCommand("status", "nomorecombatlog.admin.status", this::status));
         root.then(Commands.literal("extend").requires(s -> permitted(s, "nomorecombatlog.admin.extend"))
-                .then(Commands.argument("player", StringArgumentType.word())
-                        .then(Commands.argument("duration", StringArgumentType.word()).executes(this::extend))));
+                .then(Commands.argument("player", StringArgumentType.word()).suggests(CommandSuggestions.players())
+                        .then(Commands.argument("duration", StringArgumentType.word()).suggests(CommandSuggestions.durations()).executes(this::extend))));
         root.then(Commands.literal("list").requires(s -> permitted(s, "nomorecombatlog.admin.list")).executes(this::list));
         root.then(optionalDuration("tagall", "nomorecombatlog.admin.tagall", this::tagAll));
         root.then(Commands.literal("untagall").requires(s -> permitted(s, "nomorecombatlog.admin.untagall")).executes(this::untagAll));
@@ -92,34 +93,48 @@ public final class AdminCommandRegistrar {
                 .then(Commands.argument("z2", DoubleArgumentType.doubleArg()).executes(this::zoneCuboid)))))))));
         root.then(Commands.literal("list").requires(s -> s.getSender().hasPermission("nomorecombatlog.safezone.list")).executes(this::zoneList));
         root.then(Commands.literal("info").requires(s -> s.getSender().hasPermission("nomorecombatlog.safezone.list"))
-                .then(Commands.argument("name", StringArgumentType.word()).executes(this::zoneInfo)));
+                .then(Commands.argument("name", StringArgumentType.word()).suggests(CommandSuggestions.zones(zones)).executes(this::zoneInfo)));
         root.then(Commands.literal("remove").requires(s -> s.getSender().hasPermission("nomorecombatlog.safezone.remove"))
-                .then(Commands.argument("name", StringArgumentType.word()).executes(this::zoneRemove)));
+                .then(Commands.argument("name", StringArgumentType.word()).suggests(CommandSuggestions.zones(zones)).executes(this::zoneRemove)));
         return root;
     }
 
     private LiteralArgumentBuilder<CommandSourceStack> playerCommand(String name, String permission,
             com.mojang.brigadier.Command<CommandSourceStack> command) {
         return Commands.literal(name).requires(s -> permitted(s, permission))
-                .then(Commands.argument("player", StringArgumentType.word()).executes(command));
+                .then(Commands.argument("player", StringArgumentType.word()).suggests(CommandSuggestions.players()).executes(command));
     }
 
     private LiteralArgumentBuilder<CommandSourceStack> playerOptionalDuration(String name, String permission,
             com.mojang.brigadier.Command<CommandSourceStack> command) {
         return Commands.literal(name).requires(s -> permitted(s, permission))
-                .then(Commands.argument("player", StringArgumentType.word()).executes(command)
-                        .then(Commands.argument("duration", StringArgumentType.word()).executes(command)));
+                .then(Commands.argument("player", StringArgumentType.word()).suggests(CommandSuggestions.players()).executes(command)
+                        .then(Commands.argument("duration", StringArgumentType.word()).suggests(CommandSuggestions.durations()).executes(command)));
     }
 
     private LiteralArgumentBuilder<CommandSourceStack> optionalDuration(String name, String permission,
             com.mojang.brigadier.Command<CommandSourceStack> command) {
         return Commands.literal(name).requires(s -> permitted(s, permission)).executes(command)
-                .then(Commands.argument("duration", StringArgumentType.word()).executes(command));
+                .then(Commands.argument("duration", StringArgumentType.word()).suggests(CommandSuggestions.durations()).executes(command));
     }
 
     private int info(CommandContext<CommandSourceStack> context) {
-        context.getSource().getSender().sendMessage(Component.text("NoMoreCombatLog v" + plugin.getPluginMeta().getVersion()
-                + " — /nmcl status <player>, /nmcl tag, /nmcl untag, /nmcl list"));
+        CommandSender sender = context.getSource().getSender();
+        AdminUi.header(sender, "NoMoreCombatLog");
+        AdminUi.row(sender, "Version", plugin.getPluginMeta().getVersion());
+        for (String[] command : new String[][] {
+                {"status <player>", "nomorecombatlog.admin.status"}, {"tag <player> [duration]", "nomorecombatlog.admin.tag"},
+                {"untag <player>", "nomorecombatlog.admin.untag"}, {"extend <player> <duration>", "nomorecombatlog.admin.extend"},
+                {"list", "nomorecombatlog.admin.list"}, {"tagall [duration]", "nomorecombatlog.admin.tagall"},
+                {"untagall", "nomorecombatlog.admin.untagall"}, {"debug <player>", "nomorecombatlog.admin.debug"}}) {
+            if (sender.hasPermission(command[1]) || sender.hasPermission("nomorecombatlog.admin"))
+                AdminUi.entry(sender, "/nmcl " + command[0], "");
+        }
+        if (sender.hasPermission("nomorecombatlog.safezone")) AdminUi.entry(sender, "/nmcl safezone", "zones");
+        if (permitted(context.getSource(), "nomorecombatlog.admin.reload") || sender.hasPermission("nomorecombatlog.reload")
+                || sender.hasPermission("nomorecombatlog.reloadCommand")) AdminUi.entry(sender, "/nmcl reload", "config / messages / all");
+        AdminUi.row(sender, "Tip", "Use Tab to explore commands.");
+        AdminUi.footer(sender);
         return 1;
     }
 
@@ -153,24 +168,42 @@ public final class AdminCommandRegistrar {
 
     private void sendStatus(CommandSender sender, Player player, boolean detailed) {
         CombatTag tag = combat.getTag(player.getUniqueId()).orElse(null);
-        sender.sendMessage(Component.text("NMCL status for " + player.getName()));
-        sender.sendMessage(Component.text("Combat: " + (tag != null) + " | remaining: " + DurationParser.format(combat.getRemainingTime(player.getUniqueId()))));
-        sender.sendMessage(Component.text("Opponent: " + (tag == null ? "Unknown" : tag.opponentId().map(this::name).orElse("Unknown"))
-                + " | reason: " + (tag == null ? "-" : tag.reason())));
-        sender.sendMessage(Component.text("World: " + player.getWorld().getName() + " | safe zone: "
-                + zones.at(player.getLocation()).map(SafeZone::name).orElse("none") + " | grace: " + grace.isProtected(player.getUniqueId())));
-        if (detailed) sender.sendMessage(Component.text("World disabled: " + config.isWorldDisabled(player.getWorld().getName())
-                + " | creative: " + player.getGameMode() + " | bypass: " + player.hasPermission("nomorecombatlog.bypass")
-                + " | display: " + config.settings().display().type() + " | command mode: " + config.settings().commands().mode()
-                + " | portals allowed: " + config.settings().teleport().portals() + " | pearls allowed: " + config.settings().teleport().enderPearls()));
+        AdminUi.header(sender, detailed ? "Debug" : "Player Status");
+        AdminUi.row(sender, "Player", player.getName(), NamedTextColor.AQUA);
+        if (detailed) AdminUi.row(sender, "UUID", player.getUniqueId().toString());
+        AdminUi.section(sender, "Combat");
+        AdminUi.row(sender, "State", tag == null ? "INACTIVE" : "ACTIVE", tag == null ? NamedTextColor.GREEN : NamedTextColor.RED);
+        AdminUi.row(sender, "Remaining", DurationParser.format(combat.getRemainingTime(player.getUniqueId())));
+        AdminUi.row(sender, "Opponent", tag == null ? "None" : tag.opponentId().map(this::name).orElse("None"));
+        AdminUi.row(sender, "Reason", tag == null ? "None" : AdminUi.name(tag.reason()));
+        AdminUi.section(sender, "Environment");
+        AdminUi.row(sender, "World", player.getWorld().getName());
+        AdminUi.row(sender, "Safe Zone", zones.at(player.getLocation()).map(SafeZone::name).orElse("None"));
+        AdminUi.row(sender, "Grace Period", AdminUi.yesNo(grace.isProtected(player.getUniqueId())));
+        if (detailed) {
+            AdminUi.row(sender, "World Disabled", AdminUi.yesNo(config.isWorldDisabled(player.getWorld().getName())));
+            AdminUi.row(sender, "Game Mode", AdminUi.name(player.getGameMode()));
+            AdminUi.section(sender, "Permissions & Restrictions");
+            AdminUi.row(sender, "Combat Bypass", AdminUi.yesNo(player.hasPermission("nomorecombatlog.bypass")));
+            AdminUi.row(sender, "Command Mode", AdminUi.name(config.settings().commands().mode()));
+            AdminUi.row(sender, "Portals", config.settings().teleport().portals() ? "Allowed" : "Blocked");
+            AdminUi.row(sender, "Ender Pearls", config.settings().teleport().enderPearls() ? "Allowed" : "Blocked");
+            AdminUi.row(sender, "Display", AdminUi.name(config.settings().display().type()));
+        }
+        AdminUi.footer(sender);
     }
 
     private int list(CommandContext<CommandSourceStack> context) {
         List<CombatTag> tags = new ArrayList<>(combat.getActiveTags());
         tags.sort(Comparator.comparing(tag -> name(tag.playerId())));
-        context.getSource().getSender().sendMessage(Component.text("Active combat tags: " + tags.size()));
-        tags.forEach(tag -> context.getSource().getSender().sendMessage(Component.text("- " + name(tag.playerId()) + ": "
-                + DurationParser.format(tag.remaining(System.currentTimeMillis())) + " (" + tag.reason() + ")")));
+        CommandSender sender = context.getSource().getSender();
+        if (tags.isEmpty()) { sender.sendMessage(Component.text("No players are currently in combat.", NamedTextColor.GREEN)); return 1; }
+        AdminUi.header(sender, "Active Combat");
+        AdminUi.row(sender, "Players", Integer.toString(tags.size()));
+        long now = System.currentTimeMillis();
+        tags.forEach(tag -> AdminUi.entry(sender, name(tag.playerId()),
+                DurationParser.format(tag.remaining(now)) + "  •  " + AdminUi.name(tag.reason())));
+        AdminUi.footer(sender);
         return 1;
     }
 
@@ -208,14 +241,39 @@ public final class AdminCommandRegistrar {
     }
 
     private int zoneList(CommandContext<CommandSourceStack> c) {
-        c.getSource().getSender().sendMessage(Component.text("Safe zones: " + zones.zones().size()));
-        zones.zones().forEach(z -> c.getSource().getSender().sendMessage(Component.text("- " + z.name() + " (" + z.type() + ", " + z.world() + ")")));
+        CommandSender sender = c.getSource().getSender();
+        if (zones.zones().isEmpty()) { sender.sendMessage(Component.text("No safe zones configured.", NamedTextColor.GREEN)); return 1; }
+        AdminUi.header(sender, "Safe Zones");
+        AdminUi.row(sender, "Zones", Integer.toString(zones.zones().size()));
+        zones.zones().forEach(z -> AdminUi.entry(sender, z.name(), AdminUi.name(z.type()) + "  •  " + z.world()));
+        AdminUi.footer(sender);
         return 1;
     }
 
     private int zoneInfo(CommandContext<CommandSourceStack> c) {
         String name = StringArgumentType.getString(c, "name");
-        return zones.find(name).map(zone -> { c.getSource().getSender().sendMessage(Component.text(zone.toString())); return 1; }).orElse(0);
+        return zones.find(name).map(zone -> {
+            CommandSender sender = c.getSource().getSender();
+            AdminUi.header(sender, "Safe Zone");
+            AdminUi.row(sender, "Name", zone.name(), NamedTextColor.AQUA);
+            AdminUi.row(sender, "Type", AdminUi.name(zone.type()));
+            AdminUi.row(sender, "World", zone.world());
+            AdminUi.section(sender, "Flags");
+            AdminUi.row(sender, "Prevent Combat", AdminUi.yesNo(zone.preventCombat()));
+            AdminUi.row(sender, "Clear on Entry", AdminUi.yesNo(zone.clearCombatOnEntry()));
+            AdminUi.row(sender, "Show Message", AdminUi.yesNo(zone.showMessage()));
+            AdminUi.section(sender, zone.type() == org.mikrowellentoast.NMCL.safezone.SafeZoneType.SPHERE ? "Sphere" : "Bounds");
+            if (zone.type() == org.mikrowellentoast.NMCL.safezone.SafeZoneType.SPHERE) {
+                AdminUi.row(sender, "Center", zone.minX() + ", " + zone.minY() + ", " + zone.minZ());
+                AdminUi.row(sender, "Radius", Double.toString(zone.radius()));
+            } else {
+                AdminUi.row(sender, "X", zone.minX() + " → " + zone.maxX());
+                AdminUi.row(sender, "Y", zone.minY() + " → " + zone.maxY());
+                AdminUi.row(sender, "Z", zone.minZ() + " → " + zone.maxZ());
+            }
+            AdminUi.footer(sender);
+            return 1;
+        }).orElseGet(() -> { c.getSource().getSender().sendMessage(Component.text("Safe zone not found: " + name, NamedTextColor.RED)); return 0; });
     }
 
     private int zoneRemove(CommandContext<CommandSourceStack> c) { return zones.remove(StringArgumentType.getString(c, "name")) ? 1 : 0; }

@@ -13,7 +13,7 @@ Creative players, bypassed players, disabled worlds, grace-protected players, an
 Durations accept `30s`, `5m`, `2h`, `1d`, and compounds such as `1h30m`. Legacy numbers mean seconds. The shipped [`config.yml`](src/main/resources/config.yml) is the complete reference:
 
 ```yaml
-config-version: 2
+config-version: 3
 plugin:
   enabled: true
 combat:
@@ -39,11 +39,9 @@ punishment:
   enabled: true
   actions:
     - type: KILL
-persistence:
-  enabled: true
 ```
 
-Migration preserves unrelated values, creates a timestamped backup, and maps all 1.x keys, including the inconsistent `retaliationattack`, `retaliation-attack`, `retaliation-window`, and `retaliation-attack-duration` spellings. Player-facing MiniMessage text is in `messages.yml`; empty values disable individual messages.
+Migration preserves unrelated values, creates a timestamped backup, and maps all 1.x keys, including the inconsistent `retaliationattack`, `retaliation-attack`, `retaliation-window`, and `retaliation-attack-duration` spellings. Version 3 removes the obsolete `persistence` section, even when it was set to `false`. Active tags are always saved and restored. Player-facing MiniMessage text is in `messages.yml`; empty values disable individual messages.
 
 ## Displays, restrictions, and punishment
 
@@ -67,6 +65,8 @@ punishment:
 ```
 
 Active tags are debounced to `combat-data.yml` and restored only while unexpired. Shutdown sets a guard before saving, so server-stop disconnects are never punished.
+
+Brigadier completes online player names, existing safe-zone names, and example durations (`10s`, `30s`, `1m`, `5m`, `30m`, `1h`). Other valid durations remain accepted. Status, debug, list, and safe-zone views use compact colored admin layouts.
 
 ## Commands and permissions
 
@@ -105,90 +105,3 @@ api.untag(player);
 ```
 
 Events: `PlayerCombatStartEvent` (cancellable), `PlayerCombatRefreshEvent`, `PlayerCombatEndEvent`, and `PlayerCombatLogEvent`.
-
-<!-- Legacy README retained invisibly for repository history.
-A simple and configurable Paper plugin that prevents players from combat logging.
-
----
-
-##  Features
-
-
--  Players are placed in combat when attacking or being attacked.
-- The combat tag lasts for a configurable duration.
-- Actionbar messages show remaining tag time.
-- If a tagged player logs out before the timer ends, they are automatically killed (can be changed to ban).
-- Players can be prevented from using portals while in combat.
-- Commands can be blocked during combat.
-- Configurable to allow or disallow tagging in creative mode.
-- Can be disabled in specific worlds.
-
-### Retaliation Mode (optional)
-- Tag only when player is attacked and attacks back within a configurable time window.
-
-### Safe Zones
--You can add custom safezones where players cant attack eachother.
-
----
-
-## Installation
-
-1. Download the latest release of **NoMoreCombatLog.jar**.
-2. Place it inside your server’s `/plugins/` directory.
-3. Start or restart your Paper server.
-
----
-
-## Configuration
-
-Everything can be changed in the `config.yml` file:
-
-```yaml
-enabled: true                    # Enable or disable the plugin
-combat-tag-duration: 30          # Duration (seconds) of the combat tag
-enable-in-creative: false        # Allow tagging in creative mode
-retaliationattack: false         # Enable retaliation-based tagging
-retaliation-window: 10           # Time window for retaliation mode
-set-attacker-on-combat: true     # Tag attacker in retaliation mode
-allow-portal-teleport: false     # Allow portals during combat
-blocked-commands: []             # Commands blocked during combat
-disabled-worlds: # List of worlds where combat logging is disabled
-  - world_the_end
-
-enable-safe-zone: false # Whether to enable safe zones where players are not tagged in combat
-
-remove-tag-when-entering-safe-zone: false # When set to true. Combat tag is removed when entering a safe zone
-```
-
-## Commands
-| Command                              | Permission               | Description                      |
-|--------------------------------------|---------------------------|----------------------------------|
-| `/nmcl`                              | `nomorecombatlog.use`     | Shows the plugin version.        |
-| `/nmcl reload`                       | `nomorecombatlog.reload`  | Reloads the plugin configuration. |
-| `/nmcl safezone add <name> <radius>` | `nomorecombatlog.safezone.add` | Adds a safezone |
-| `/nmcl safezone remove <name>` | `nomorcombatlog.safezone.remove` | Removes a safezone |
-|`/nmcl safezone list` | `nomorecombatlog.safezone.list` | Lists all safezones |
-
----
-
-## Permissions
-| Permission                | Description                   |
-|---------------------------|-------------------------------|
-| `nomorecombatlog.reload`  | Allows use of the `/nmcl reload` command. |
-| `nomorecombatlog.bypass` | Bypass combat logging         |
-| `nomorecombatlog.safezone.add` | Allows adding safezones |
-| `nomorecombatlog.safezone.remove` | Allows removing safezones |
-| `nomorecombatlog.safezone.list` | Allows listing all safezones |
-
-
----
-## TODO
-- Add customizable messages.
-- don't kill players in combat because of server restart
-- ~~more punishments for combat logging~~
-- support for other server types (Spigot)
-- keep track of combat loggers across server restarts
-- ~~disabled worlds support~~
-- ~~disable commands while in combat~~
-- Toggle safezone message
--->

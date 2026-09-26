@@ -9,7 +9,7 @@ import java.util.Set;
 
 public record PluginConfig(boolean enabled, Combat combat, Display display, Commands commands, Teleport teleport,
                            Set<String> disabledWorlds, SafeZones safeZones, boolean punishmentEnabled,
-                           List<PunishmentDefinition> punishments, boolean persistenceEnabled,
+                           List<PunishmentDefinition> punishments,
                            Integrations integrations, boolean debug) {
     public record Combat(Duration duration, boolean creativeMode, Retaliation retaliation,
                          GracePeriod gracePeriod, DamageSources damageSources) {}

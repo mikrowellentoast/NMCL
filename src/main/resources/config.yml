@@ -1,4 +1,4 @@
-config-version: 2
+config-version: 3
 
 plugin:
   enabled: true
@@ -55,9 +55,6 @@ punishment:
   enabled: true
   actions:
     - type: KILL
-
-persistence:
-  enabled: true
 
 integrations:
   placeholder-api: true
