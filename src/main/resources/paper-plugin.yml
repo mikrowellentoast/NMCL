@@ -4,13 +4,60 @@ main: org.mikrowellentoast.NMCL.NoMoreCombatLog
 api-version: '26.2'
 authors: [ mikrowellentoast ]
 description: A simple and configurable Paper plugin that prevents players from combat logging.
+dependencies:
+  server:
+    PlaceholderAPI:
+      load: BEFORE
+      required: false
+      join-classpath: true
+    WorldGuard:
+      load: BEFORE
+      required: false
+      join-classpath: false
 
 permissions:
+  nomorecombatlog.use:
+    description: Shows NMCL information.
+    default: true
+  nomorecombatlog.admin:
+    description: Grants all NMCL administration commands.
+    default: op
+    children:
+      nomorecombatlog.admin.tag: true
+      nomorecombatlog.admin.untag: true
+      nomorecombatlog.admin.status: true
+      nomorecombatlog.admin.extend: true
+      nomorecombatlog.admin.list: true
+      nomorecombatlog.admin.tagall: true
+      nomorecombatlog.admin.untagall: true
+      nomorecombatlog.admin.debug: true
+      nomorecombatlog.admin.reload: true
+  nomorecombatlog.admin.tag:
+    default: op
+  nomorecombatlog.admin.untag:
+    default: op
+  nomorecombatlog.admin.status:
+    default: op
+  nomorecombatlog.admin.extend:
+    default: op
+  nomorecombatlog.admin.list:
+    default: op
+  nomorecombatlog.admin.tagall:
+    default: op
+  nomorecombatlog.admin.untagall:
+    default: op
+  nomorecombatlog.admin.debug:
+    default: op
+  nomorecombatlog.admin.reload:
+    default: op
   nomorecombatlog.reload:
     description: Allows reloading of the AntiCombatLog configuration
     default: op
   nomorecombatlog.bypass:
     description: Allows bypassing combat logging
+    default: false
+  nomorecombatlog.command.bypass:
+    description: Allows using restricted commands while combat tagged.
     default: false
   nomorecombatlog.safezone:
     description: Allows use of safezone command
@@ -26,4 +73,7 @@ permissions:
     default: op
   nomorecombatlog.safezone.list:
     description: Allows listing the current safezones
+    default: op
+  nomorecombatlog.reloadCommand:
+    description: Legacy alias for the reload permission.
     default: op

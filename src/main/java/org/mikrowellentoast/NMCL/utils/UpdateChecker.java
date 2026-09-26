@@ -11,7 +11,17 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 
 public class UpdateChecker {
-    private final NoMoreCombatLog plugin = NoMoreCombatLog.getInstance();
+    private final NoMoreCombatLog plugin;
+
+    public UpdateChecker(NoMoreCombatLog plugin) {
+        this.plugin = plugin;
+    }
+
+    /** @deprecated Pass the plugin instance explicitly. */
+    @Deprecated
+    public UpdateChecker() {
+        this(NoMoreCombatLog.getInstance());
+    }
 
 
     public void checkForUpdates() {
@@ -20,15 +30,17 @@ public class UpdateChecker {
             HttpURLConnection conn = (HttpURLConnection) url.toURL().openConnection();
 
             conn.setRequestMethod("GET");
+            conn.setConnectTimeout(5_000);
+            conn.setReadTimeout(5_000);
+            conn.setRequestProperty("User-Agent", "NoMoreCombatLog/" + plugin.getPluginMeta().getVersion());
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             StringBuilder response = new StringBuilder();
-            String line;
-
-            while((line = reader.readLine()) != null) {
-                response.append(line);
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+                String line;
+                while((line = reader.readLine()) != null) response.append(line);
+            } finally {
+                conn.disconnect();
             }
-            reader.close();
 
             JsonArray versions = (JsonArray) JsonParser.parseString(response.toString());
 

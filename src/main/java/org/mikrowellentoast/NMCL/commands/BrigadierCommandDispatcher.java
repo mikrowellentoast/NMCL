@@ -19,10 +19,17 @@ import java.util.List;
 
 public class BrigadierCommandDispatcher {
 
+    /** @deprecated Commands are registered by AdminCommandRegistrar during plugin startup. */
+    @Deprecated public BrigadierCommandDispatcher(NoMoreCombatLog plugin) {}
+    /** @deprecated Registration is automatic. */
+    @Deprecated public void register() {}
+
+/* Legacy command tree disabled; retained in-source for migration history.
+
     private final NoMoreCombatLog plugin;
     private final ConfigManager config = ConfigManager.getInstance();
 
-    public BrigadierCommandDispatcher(NoMoreCombatLog plugin) {
+    private BrigadierCommandDispatcher(NoMoreCombatLog plugin, boolean legacy) {
         this.plugin = plugin;
     }
 
@@ -210,4 +217,5 @@ public class BrigadierCommandDispatcher {
         sender.sendMessage("§aSafezone §e" + name + " §awas removed.");
         return 1;
     }
+*/
 }

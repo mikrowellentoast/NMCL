@@ -19,6 +19,15 @@ import java.util.*;
 
 public class CombatListener implements Listener {
 
+    /** @deprecated Combat state is now owned by CombatManager. */
+    @Deprecated
+    public boolean isCombatTagged(UUID uuid) {
+        NoMoreCombatLog current = NoMoreCombatLog.getInstance();
+        return current != null && current.getCombatManager() != null && current.getCombatManager().isTagged(uuid);
+    }
+
+/* Legacy implementation disabled; retained in-source for the 1.x migration history.
+
     private final HashMap<UUID, Long> combatTagged = new HashMap<>();
     private final HashMap<UUID, retaliationdata> retaliationMap = new HashMap<>();
     private final NoMoreCombatLog plugin = NoMoreCombatLog.getInstance();
@@ -30,7 +39,7 @@ public class CombatListener implements Listener {
         startActionbarTask();
     }
 
-    public boolean isCombatTagged(UUID uuid) {
+    private boolean legacyIsCombatTagged(UUID uuid) {
         return combatTagged.containsKey(uuid);
     }
 
@@ -223,4 +232,5 @@ public class CombatListener implements Listener {
         }
         return false;
     }
+*/
 }

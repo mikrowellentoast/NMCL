@@ -1,9 +1,3 @@
-# Players in these zones will not be tagged in combat (if enable-safe-zone is true in config.yml)
-
-safe-zones:
-  - name: spawn
-    world: world
-    x: 0
-    y: 64
-    z: 0
-    radius: 20.0
+# Safe zones are stored separately so config reloads never overwrite them.
+# Legacy list-style radius zones are migrated automatically.
+safe-zones: {}
