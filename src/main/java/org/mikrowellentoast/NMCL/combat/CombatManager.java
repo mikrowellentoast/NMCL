@@ -126,7 +126,7 @@ public final class CombatManager {
     }
 
     private void saveLater() {
-        if (config.settings().persistenceEnabled()) storage.requestSave(tags.values());
+        storage.requestSave(tags.values());
     }
 
     private void debug(String message) {

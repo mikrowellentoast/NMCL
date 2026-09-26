@@ -21,6 +21,7 @@ public final class CombatStorage {
     private volatile List<Snapshot> latest = List.of();
     private volatile BukkitTask pending;
     private volatile long revision;
+    private volatile boolean closed;
 
     public CombatStorage(NoMoreCombatLog plugin) {
         this.plugin = plugin;
@@ -56,6 +57,7 @@ public final class CombatStorage {
     }
 
     public void requestSave(Collection<CombatTag> tags) {
+        if (closed) return;
         latest = snapshot(tags);
         revision++;
         if (pending != null) return;
@@ -63,11 +65,13 @@ public final class CombatStorage {
     }
 
     public void saveNow(Collection<CombatTag> tags) {
+        List<Snapshot> finalSnapshot = snapshot(tags);
+        closed = true;
         if (pending != null) {
             pending.cancel();
             pending = null;
         }
-        saveSnapshot(snapshot(tags));
+        saveSnapshot(finalSnapshot, true);
     }
 
     private List<Snapshot> snapshot(Collection<CombatTag> tags) {
@@ -79,7 +83,8 @@ public final class CombatStorage {
         pending = Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
             long savedRevision = revision;
             List<Snapshot> snapshot = latest;
-            saveSnapshot(snapshot);
+            saveSnapshot(snapshot, false);
+            if (closed) return;
             Bukkit.getScheduler().runTask(plugin, () -> {
                 pending = null;
                 if (revision != savedRevision) scheduleSave();
@@ -87,7 +92,8 @@ public final class CombatStorage {
         }, 20L);
     }
 
-    private synchronized void saveSnapshot(Collection<Snapshot> tags) {
+    private synchronized void saveSnapshot(Collection<Snapshot> tags, boolean finalSave) {
+        if (closed && !finalSave) return;
         YamlConfiguration yaml = new YamlConfiguration();
         for (Snapshot tag : tags) {
             String path = "tags." + tag.player();

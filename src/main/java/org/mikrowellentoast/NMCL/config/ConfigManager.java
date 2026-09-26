@@ -67,7 +67,7 @@ public final class ConfigManager {
                 new PluginConfig.Teleport(c.getBoolean("teleport.portals", false), c.getBoolean("teleport.ender-pearls", false)),
                 lowerSet(c.getStringList("worlds.disabled")),
                 new PluginConfig.SafeZones(c.getBoolean("safe-zones.enabled", false), c.getBoolean("safe-zones.remove-combat-on-entry", false)),
-                c.getBoolean("punishment.enabled", true), List.copyOf(punishments(c)), c.getBoolean("persistence.enabled", true),
+                c.getBoolean("punishment.enabled", true), List.copyOf(punishments(c)),
                 new PluginConfig.Integrations(c.getBoolean("integrations.placeholder-api", true),
                         new PluginConfig.WorldGuard(c.getBoolean("integrations.worldguard.enabled", false),
                                 lowerSet(c.getStringList("integrations.worldguard.safe-regions")))),
