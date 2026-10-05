@@ -120,7 +120,7 @@ public final class AdminCommandRegistrar {
 
     private int info(CommandContext<CommandSourceStack> context) {
         CommandSender sender = context.getSource().getSender();
-        AdminUi.header(sender, "NoMoreCombatLog");
+        AdminUi.header(sender, "Commands");
         AdminUi.row(sender, "Version", plugin.getPluginMeta().getVersion());
         for (String[] command : new String[][] {
                 {"status <player>", "nomorecombatlog.admin.status"}, {"tag <player> [duration]", "nomorecombatlog.admin.tag"},
@@ -133,7 +133,6 @@ public final class AdminCommandRegistrar {
         if (sender.hasPermission("nomorecombatlog.safezone")) AdminUi.entry(sender, "/nmcl safezone", "zones");
         if (permitted(context.getSource(), "nomorecombatlog.admin.reload") || sender.hasPermission("nomorecombatlog.reload")
                 || sender.hasPermission("nomorecombatlog.reloadCommand")) AdminUi.entry(sender, "/nmcl reload", "config / messages / all");
-        AdminUi.row(sender, "Tip", "Use Tab to explore commands.");
         AdminUi.footer(sender);
         return 1;
     }
