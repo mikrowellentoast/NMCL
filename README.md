@@ -1,107 +1,35 @@
 # NoMoreCombatLog
 
-NoMoreCombatLog is a Paper plugin with centralized PvP combat state, combat-log punishments, safe zones, persistence, and a public API.
+NoMoreCombatLog (NMCL) is a Paper plugin for PvP combat tagging. When players fight, both get a timer. If someone disconnects before it runs out, NMCL applies the punishment you configured.
 
-## Combat mechanics
+## Getting started
 
-Eligible player-caused melee, arrow, trident, and projectile damage tags both players for `combat.duration`. Tags contain their exact expiry, reason, latest opponent, and opponent history. Expiry is checked on every state read, so expired tags are never logically active.
+Put the plugin JAR in your server's `plugins` folder and start the server. NMCL creates its files on first launch:
 
-Creative players, bypassed players, disabled worlds, grace-protected players, and players in a `prevent-combat` safe zone are ignored. Join and respawn grace periods prevent new tags without making players invulnerable. Retaliation mode starts mutual combat only when the victim attacks the original attacker inside the configured window; `tag-attacker-immediately` can tag the initial attacker at once.
+- [`config.yml`](src/main/resources/config.yml) controls combat time, damage sources, grace periods, displays, commands, teleport restrictions, safe zones, and punishments.
+- [`messages.yml`](src/main/resources/messages.yml) contains the short messages players see.
+- Safe zones are stored separately in `safezones.yml`.
 
-## Configuration
+Combat lasts **30 seconds** by default. Durations such as `30s`, `5m`, and `1h30m` work in the config and admin commands. Active tags are saved automatically and restored after a restart. NMCL backs up and migrates older configs.
 
-Durations accept `30s`, `5m`, `2h`, `1d`, and compounds such as `1h30m`. Legacy numbers mean seconds. The shipped [`config.yml`](src/main/resources/config.yml) is the complete reference:
+You can choose an action bar, boss bar, title, or no display. Punishments can include killing, banning, temporary bans, console commands, and dropping inventory or experience. Join and respawn grace periods, disabled worlds, bypass permissions, and safe zones let you decide where combat tagging applies.
 
-```yaml
-config-version: 3
-plugin:
-  enabled: true
-combat:
-  duration: 30s
-  creative-mode: false
-  retaliation:
-    enabled: false
-    window: 10s
-    tag-attacker-immediately: true
-  grace-period:
-    join: 5s
-    respawn: 3s
-    mutual: true
-display:
-  type: ACTION_BAR # ACTION_BAR, BOSS_BAR, TITLE, NONE
-commands:
-  mode: BLACKLIST # or WHITELIST
-  list: [home, spawn, warp, tpa]
-teleport:
-  portals: false
-  ender-pearls: false
-punishment:
-  enabled: true
-  actions:
-    - type: KILL
-```
+## Commands
 
-Migration preserves unrelated values, creates a timestamped backup, and maps all 1.x keys, including the inconsistent `retaliationattack`, `retaliation-attack`, `retaliation-window`, and `retaliation-attack-duration` spellings. Version 3 removes the obsolete `persistence` section, even when it was set to `false`. Active tags are always saved and restored. Player-facing MiniMessage text is in `messages.yml`; empty values disable individual messages.
+Type `/nmcl` for the commands you can use. Tab completion suggests online players, existing safe zones, and example durations.
 
-## Displays, restrictions, and punishment
+| Command | What it does |
+| --- | --- |
+| `/nmcl status <player>` | Show a player's combat status |
+| `/nmcl tag <player> [duration]` | Start or refresh combat |
+| `/nmcl untag <player>` | Remove a combat tag |
+| `/nmcl extend <player> <duration>` | Add time to a tag |
+| `/nmcl list` | Show active tags |
+| `/nmcl debug <player>` | Show details useful for troubleshooting |
+| `/nmcl reload [config\|messages\|all]` | Reload settings or messages |
 
-`ACTION_BAR` shows remaining time, `BOSS_BAR` adds proportional progress, `TITLE` displays start/end messaging without per-tick title spam, and `NONE` disables UI. A single maintenance task updates displays and cleans expired state.
+`tagall` and `untagall` are available for bulk changes. Use `/nmcl safezone` to add, inspect, list, or remove spherical and cuboid zones. Admin commands have separate permissions; see [`paper-plugin.yml`](src/main/resources/paper-plugin.yml). `nomorecombatlog.admin` grants all admin commands.
 
-BLACKLIST blocks only listed commands; WHITELIST blocks everything except listed commands. Matching ignores case, arguments, leading slashes, and namespaces such as `minecraft:home`. Portal and ender-pearl restrictions share the same enabled/world/bypass checks.
+## For other plugins
 
-Punishment actions can be combined: `KILL`, `BAN`, `TEMPBAN`, `COMMAND`, `DROP_INVENTORY`, and `DROP_EXPERIENCE`.
-
-```yaml
-punishment:
-  enabled: true
-  actions:
-    - type: TEMPBAN
-      duration: 1d
-      reason: "Combat logging"
-    - type: COMMAND
-      commands:
-        - "eco take <player> 500"
-        - "broadcast <player> combat logged!"
-```
-
-Active tags are debounced to `combat-data.yml` and restored only while unexpired. Shutdown sets a guard before saving, so server-stop disconnects are never punished.
-
-Brigadier completes online player names, existing safe-zone names, and example durations (`10s`, `30s`, `1m`, `5m`, `30m`, `1h`). Other valid durations remain accepted. Status, debug, list, and safe-zone views use compact colored admin layouts.
-
-## Commands and permissions
-
-| Command | Permission |
-|---|---|
-| `/nmcl tag <player> [duration]` | `nomorecombatlog.admin.tag` |
-| `/nmcl untag <player>` | `nomorecombatlog.admin.untag` |
-| `/nmcl status <player>` | `nomorecombatlog.admin.status` |
-| `/nmcl extend <player> <duration>` | `nomorecombatlog.admin.extend` |
-| `/nmcl list` | `nomorecombatlog.admin.list` |
-| `/nmcl tagall [duration]` | `nomorecombatlog.admin.tagall` |
-| `/nmcl untagall` | `nomorecombatlog.admin.untagall` |
-| `/nmcl debug <player>` | `nomorecombatlog.admin.debug` |
-| `/nmcl reload [config\|messages\|all]` | `nomorecombatlog.admin.reload` |
-| `/nmcl safezone add <name> <radius>` | `nomorecombatlog.safezone.add` |
-| `/nmcl safezone cuboid <name> <x1> <y1> <z1> <x2> <y2> <z2>` | `nomorecombatlog.safezone.add` |
-| `/nmcl safezone info <name>` / `list` / `remove <name>` | matching safe-zone permission |
-
-`nomorecombatlog.admin` grants all admin commands. Legacy reload and safe-zone permissions remain valid. `nomorecombatlog.bypass` bypasses combat; `nomorecombatlog.command.bypass` bypasses only command restrictions.
-
-## Safe zones
-
-Safe zones stay in `safezones.yml`. Old list-style radius zones migrate automatically. Three-dimensional spheres and cuboids support `prevent-combat`, `clear-combat-on-entry`, and `show-message`; zones are indexed per world.
-
-## PlaceholderAPI, events, and public API
-
-PlaceholderAPI is optional. NMCL provides `%nmcl_in_combat%`, `%nmcl_combat_time%`, `%nmcl_combat_time_seconds%`, `%nmcl_opponent%`, and `%nmcl_reason%`. WorldGuard detection is optional and isolated behind the integration manager; NMCL starts normally without either plugin.
-
-Use the API on the server thread:
-
-```java
-NMCLApi api = NoMoreCombatLog.getAPI();
-api.tag(player, Duration.ofSeconds(30));
-api.getOpponent(player.getUniqueId()).ifPresent(uuid -> getLogger().info(uuid.toString()));
-api.untag(player);
-```
-
-Events: `PlayerCombatStartEvent` (cancellable), `PlayerCombatRefreshEvent`, `PlayerCombatEndEvent`, and `PlayerCombatLogEvent`.
+PlaceholderAPI is optional. Available placeholders include `%nmcl_in_combat%`, `%nmcl_combat_time%`, `%nmcl_combat_time_seconds%`, `%nmcl_opponent%`, and `%nmcl_reason%`. Other plugins can use `NoMoreCombatLog.getAPI()` and listen for combat start, refresh, end, and combat log events.
