@@ -1,4 +1,4 @@
-config-version: 3
+config-version: 4
 
 plugin:
   enabled: true
@@ -22,13 +22,8 @@ combat:
     other-player-caused-damage: true
 
 display:
+  # ACTION_BAR, BOSS_BAR, TITLE, or NONE
   type: ACTION_BAR
-  action-bar:
-    enabled: true
-  boss-bar:
-    enabled: false
-  title:
-    enabled: false
 
 commands:
   mode: BLACKLIST

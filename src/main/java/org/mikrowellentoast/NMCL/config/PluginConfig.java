@@ -17,7 +17,7 @@ public record PluginConfig(boolean enabled, Combat combat, Display display, Comm
     public record GracePeriod(Duration join, Duration respawn, boolean mutual) {}
     public record DamageSources(boolean melee, boolean projectiles, boolean arrows, boolean tridents,
                                 boolean otherPlayerCausedDamage) {}
-    public record Display(DisplayType type, boolean actionBar, boolean bossBar, boolean title) {}
+    public record Display(DisplayType type) {}
     public record Commands(CommandMode mode, Set<String> commands) {}
     public record Teleport(boolean portals, boolean enderPearls) {}
     public record SafeZones(boolean enabled, boolean removeCombatOnEntry) {}

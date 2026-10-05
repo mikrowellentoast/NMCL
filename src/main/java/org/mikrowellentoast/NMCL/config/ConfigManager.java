@@ -56,9 +56,7 @@ public final class ConfigManager {
                 duration(c, "combat.duration", Duration.ofSeconds(30), false),
                 c.getBoolean("combat.creative-mode", false), retaliation, grace, damage);
         DisplayType displayType = enumValue(c, "display.type", DisplayType.class, DisplayType.ACTION_BAR);
-        PluginConfig.Display display = new PluginConfig.Display(displayType,
-                c.getBoolean("display.action-bar.enabled", true), c.getBoolean("display.boss-bar.enabled", false),
-                c.getBoolean("display.title.enabled", false));
+        PluginConfig.Display display = new PluginConfig.Display(displayType);
         CommandMode commandMode = enumValue(c, "commands.mode", CommandMode.class, CommandMode.BLACKLIST);
         Set<String> commandList = new HashSet<>();
         c.getStringList("commands.list").stream().map(CommandNormalizer::normalize).filter(s -> !s.isEmpty()).forEach(commandList::add);

@@ -30,7 +30,7 @@ public final class CombatDisplayManager {
     public void onStart(Player player, CombatTag tag) {
         Map<String, Object> values = values(player, tag);
         messages.send(player, "combat.started", values);
-        if (effectiveType() == DisplayType.TITLE) {
+        if (config.settings().display().type() == DisplayType.TITLE) {
             player.showTitle(Title.title(messages.component("combat.title", values, false),
                     messages.component("combat.subtitle", values, false)));
         }
@@ -53,7 +53,7 @@ public final class CombatDisplayManager {
                 continue;
             }
             Map<String, Object> values = values(player, tag);
-            DisplayType type = effectiveType();
+            DisplayType type = config.settings().display().type();
             if (type == DisplayType.ACTION_BAR) {
                 player.sendActionBar(messages.component("combat.action-bar", values, false));
                 hide(tag.playerId(), player);
@@ -77,7 +77,7 @@ public final class CombatDisplayManager {
     }
 
     public void reload() {
-        if (effectiveType() != DisplayType.BOSS_BAR) hideAll();
+        if (config.settings().display().type() != DisplayType.BOSS_BAR) hideAll();
     }
 
     public void hideAll() {
@@ -87,16 +87,6 @@ public final class CombatDisplayManager {
     private void hide(UUID uuid, Player player) {
         BossBar bar = bossBars.remove(uuid);
         if (bar != null && player != null) player.hideBossBar(bar);
-    }
-
-    private DisplayType effectiveType() {
-        var display = config.settings().display();
-        return switch (display.type()) {
-            case ACTION_BAR -> display.actionBar() ? DisplayType.ACTION_BAR : DisplayType.NONE;
-            case BOSS_BAR -> display.bossBar() ? DisplayType.BOSS_BAR : DisplayType.NONE;
-            case TITLE -> display.title() ? DisplayType.TITLE : DisplayType.NONE;
-            case NONE -> DisplayType.NONE;
-        };
     }
 
     private Map<String, Object> values(Player player, CombatTag tag) {

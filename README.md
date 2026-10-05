@@ -12,7 +12,7 @@ Put the plugin JAR in your server's `plugins` folder and start the server. NMCL 
 
 Combat lasts **30 seconds** by default. Durations such as `30s`, `5m`, and `1h30m` work in the config and admin commands. Active tags are saved automatically and restored after a restart. NMCL backs up and migrates older configs.
 
-You can choose an action bar, boss bar, title, or no display. Punishments can include killing, banning, temporary bans, console commands, and dropping inventory or experience. Join and respawn grace periods, disabled worlds, bypass permissions, and safe zones let you decide where combat tagging applies.
+Set `display.type` to `ACTION_BAR`, `BOSS_BAR`, `TITLE`, or `NONE` to choose the combat display. Punishments can include killing, banning, temporary bans, console commands, and dropping inventory or experience. Join and respawn grace periods, disabled worlds, bypass permissions, and safe zones let you decide where combat tagging applies.
 
 ## Commands
 

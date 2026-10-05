@@ -16,7 +16,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class ConfigMigrator {
-    public static final int CURRENT_VERSION = 3;
+    public static final int CURRENT_VERSION = 4;
     private final NoMoreCombatLog plugin;
     public ConfigMigrator(NoMoreCombatLog plugin) { this.plugin = plugin; }
 
@@ -44,6 +44,7 @@ public final class ConfigMigrator {
             config.set("persistence", null);
             plugin.getLogger().info("Removed obsolete 'persistence' configuration section; combat persistence is now always enabled.");
         }
+        migrateDisplay(config);
         try (var stream = plugin.getResource("config.yml")) {
             if (stream != null) {
                 YamlConfiguration defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(stream, StandardCharsets.UTF_8));
@@ -56,6 +57,25 @@ public final class ConfigMigrator {
         config.set("config-version", CURRENT_VERSION);
         try { config.save(file); }
         catch (IOException exception) { plugin.getLogger().severe("Could not save migrated config.yml: " + exception.getMessage()); }
+    }
+
+    private void migrateDisplay(YamlConfiguration config) {
+        String type = config.getString("display.type", "ACTION_BAR").trim().toUpperCase(Locale.ROOT).replace('-', '_');
+        String selectedToggle = switch (type) {
+            case "ACTION_BAR" -> "display.action-bar.enabled";
+            case "BOSS_BAR" -> "display.boss-bar.enabled";
+            case "TITLE" -> "display.title.enabled";
+            default -> null;
+        };
+        if (selectedToggle != null && !config.getBoolean(selectedToggle, type.equals("ACTION_BAR"))) {
+            config.set("display.type", "NONE");
+        }
+        for (String path : List.of("display.action-bar", "display.boss-bar", "display.title")) {
+            var section = config.getConfigurationSection(path);
+            if (section == null || !section.contains("enabled", true)) continue;
+            section.set("enabled", null);
+            if (section.getKeys(false).isEmpty()) config.set(path, null);
+        }
     }
 
     private void migrateLegacyPunishment(YamlConfiguration config) {
