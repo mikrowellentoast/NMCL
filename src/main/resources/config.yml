@@ -1,29 +1,61 @@
-enabled : true # Enable or disable the plugin
+config-version: 4
 
-combat-tag-duration: 30 # Duration in seconds for how long a player is in combat after being hit or hitting another player
+plugin:
+  enabled: true
 
-punishment-method: kill # Punishment for combat logging: 'kill' or 'ban'
-ban-duration: 1440 # Duration in minutes for temporary bans (only if punishment-method is 'ban') (1440 minutes = 24 hours) (set to -1 for permanent ban)
+combat:
+  duration: 30s
+  creative-mode: false
+  retaliation:
+    enabled: false
+    window: 10s
+    tag-attacker-immediately: true
+  grace-period:
+    join: 5s
+    respawn: 3s
+    mutual: true
+  damage-sources:
+    melee: true
+    projectiles: true
+    arrows: true
+    tridents: true
+    other-player-caused-damage: true
 
-enable-in-creative: false # Whether to enable combat logging in creative mode
+display:
+  # ACTION_BAR, BOSS_BAR, TITLE, or NONE
+  type: ACTION_BAR
 
-retaliation-attack: false # Enable combat tag only on retaliation attacks
-retaliation-attack-duration: 10 # Duration in seconds for retaliation attack window (only if retaliation-attack is true)
-set-attacker-on-combat: true # Whether to set the attacker as in combat when they hit another player (only if retaliation-attack is true)
+commands:
+  mode: BLACKLIST
+  list:
+    - home
+    - spawn
+    - warp
+    - tpa
 
-allow-portal-teleport: false # Whether to allow teleporting via portals while in combat
+# true means this teleport type is allowed while combat tagged.
+teleport:
+  portals: false
+  ender-pearls: false
 
-allow-enderpearl-teleport: false # Whether to allow teleporting via ender pearls while in combat
+worlds:
+  disabled:
+    - world_the_end
 
-blocked-commands: #List of commands that are disabled during combat (without slash)
-  - "home"
-  - "spawn"
-  - "warp"
-  - "tpa"
+safe-zones:
+  enabled: false
+  remove-combat-on-entry: false
 
-disabled-worlds: # List of worlds where combat logging is disabled
-  - "world_the_end"
+punishment:
+  enabled: true
+  actions:
+    - type: KILL
 
-enable-safe-zone: false # Whether to enable safe zones where players are not tagged in combat
+integrations:
+  placeholder-api: true
+  worldguard:
+    enabled: false
+    safe-regions: []
 
-remove-tag-when-entering-safe-zone: false # When set to true. Combat tag is removed when entering a safe zone
+debug:
+  enabled: false

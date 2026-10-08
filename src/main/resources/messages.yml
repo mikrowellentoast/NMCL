@@ -1,0 +1,35 @@
+prefix: "<gray>[<red>NMCL<gray>] "
+
+combat:
+  started: "<red>You are now in combat with <opponent>!"
+  ended: "<green>You are no longer in combat."
+  action-bar: "<red>Combat: <yellow><time>"
+  boss-bar: "<red>Combat: <time>"
+  title: "<red>Combat"
+  subtitle: "<gray>Opponent: <opponent>"
+
+safe-zone:
+  entered: "<green>You're safe."
+  blocked: "<red>You cannot fight in this safe zone."
+
+commands:
+  blocked: "<red>You cannot use that command while in combat."
+  teleport-blocked: "<red>You cannot teleport while in combat."
+  invalid-duration: "<red>Invalid duration. Examples: 30s, 5m, 2h, 1d."
+  player-not-found: "<red>Player <player> is not online."
+  not-tagged: "<red><player> is not in combat."
+  no-permission: "<red>You do not have permission."
+  reload-success: "<green>Reloaded <target>."
+
+admin:
+  tagged: "<green>Tagged <player> for <duration>."
+  untagged: "<green>Removed combat tag from <player>."
+  extended: "<green>Extended <player>'s combat tag by <duration>."
+  tagall: "<green>Tagged <count> eligible players."
+  untagall: "<green>Removed <count> combat tags."
+
+punishment:
+  logged: "<red><player> combat logged."
+
+update:
+  available: "<yellow>A new NMCL version is available: <version>."

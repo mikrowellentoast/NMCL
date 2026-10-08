@@ -1,122 +1,132 @@
 package org.mikrowellentoast.NMCL.config;
 
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.mikrowellentoast.NMCL.NoMoreCombatLog;
+import org.mikrowellentoast.NMCL.display.DisplayType;
+import org.mikrowellentoast.NMCL.punishment.PunishmentDefinition;
+import org.mikrowellentoast.NMCL.punishment.PunishmentConfigParser;
+import org.mikrowellentoast.NMCL.util.CommandNormalizer;
+import org.mikrowellentoast.NMCL.util.DurationParser;
 
+import java.time.Duration;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
-public class ConfigManager {
-
-    private static ConfigManager instance;
+public final class ConfigManager {
+    private static ConfigManager legacyInstance;
     private final NoMoreCombatLog plugin;
+    private volatile PluginConfig settings;
 
-    private long combatTagDuration;
-    private boolean enabledInCreative;
-    private boolean pluginEnabled;
-    private boolean retaliationOnly;
-    private long retaliationWindow;
-    private boolean setAttackerOnCombatOnRetaliation;
-    private String punishmentMethod;
-    private long banDuration;
-    private List<String> disabledWorlds;
-    private boolean safeZonesEnabled;
-    private boolean removeTagWhenEnteringSafezone;
-    private List<String> blockedCommands;
-    private boolean allowPortalInCombat;
-    private boolean allowEnderPearlInCombat;
-
-    private ConfigManager(NoMoreCombatLog plugin) {
+    public ConfigManager(NoMoreCombatLog plugin) {
         this.plugin = plugin;
-        loadConfig();
+        legacyInstance = this;
+        reload();
     }
 
-    public static void initialize(NoMoreCombatLog plugin) {
-        instance = new ConfigManager(plugin);
-    }
-
-    public static ConfigManager getInstance() {
-        if (instance == null) {
-            throw new RuntimeException("ConfigManager not initialized!");
-        }
-        return instance;
+    /** @deprecated Use dependency injection through {@link NoMoreCombatLog}. */
+    @Deprecated public static void initialize(NoMoreCombatLog plugin) { legacyInstance = new ConfigManager(plugin); }
+    /** @deprecated Use dependency injection through {@link NoMoreCombatLog}. */
+    @Deprecated public static ConfigManager getInstance() {
+        if (legacyInstance == null) throw new IllegalStateException("ConfigManager not initialized");
+        return legacyInstance;
     }
 
     public void reload() {
-        loadConfig();
+        plugin.reloadConfig();
+        FileConfiguration c = plugin.getConfig();
+        c.options().copyDefaults(true);
+        PluginConfig.Retaliation retaliation = new PluginConfig.Retaliation(
+                c.getBoolean("combat.retaliation.enabled", false),
+                duration(c, "combat.retaliation.window", Duration.ofSeconds(10), true),
+                c.getBoolean("combat.retaliation.tag-attacker-immediately", true));
+        PluginConfig.GracePeriod grace = new PluginConfig.GracePeriod(
+                duration(c, "combat.grace-period.join", Duration.ofSeconds(5), true),
+                duration(c, "combat.grace-period.respawn", Duration.ofSeconds(3), true),
+                c.getBoolean("combat.grace-period.mutual", true));
+        PluginConfig.DamageSources damage = new PluginConfig.DamageSources(
+                c.getBoolean("combat.damage-sources.melee", true),
+                c.getBoolean("combat.damage-sources.projectiles", true),
+                c.getBoolean("combat.damage-sources.arrows", true),
+                c.getBoolean("combat.damage-sources.tridents", true),
+                c.getBoolean("combat.damage-sources.other-player-caused-damage", true));
+        PluginConfig.Combat combat = new PluginConfig.Combat(
+                duration(c, "combat.duration", Duration.ofSeconds(30), false),
+                c.getBoolean("combat.creative-mode", false), retaliation, grace, damage);
+        DisplayType displayType = enumValue(c, "display.type", DisplayType.class, DisplayType.ACTION_BAR);
+        PluginConfig.Display display = new PluginConfig.Display(displayType);
+        CommandMode commandMode = enumValue(c, "commands.mode", CommandMode.class, CommandMode.BLACKLIST);
+        Set<String> commandList = new HashSet<>();
+        c.getStringList("commands.list").stream().map(CommandNormalizer::normalize).filter(s -> !s.isEmpty()).forEach(commandList::add);
+        settings = new PluginConfig(c.getBoolean("plugin.enabled", true), combat, display,
+                new PluginConfig.Commands(commandMode, Set.copyOf(commandList)),
+                new PluginConfig.Teleport(c.getBoolean("teleport.portals", false), c.getBoolean("teleport.ender-pearls", false)),
+                lowerSet(c.getStringList("worlds.disabled")),
+                new PluginConfig.SafeZones(c.getBoolean("safe-zones.enabled", false), c.getBoolean("safe-zones.remove-combat-on-entry", false)),
+                c.getBoolean("punishment.enabled", true), List.copyOf(punishments(c)),
+                new PluginConfig.Integrations(c.getBoolean("integrations.placeholder-api", true),
+                        new PluginConfig.WorldGuard(c.getBoolean("integrations.worldguard.enabled", false),
+                                lowerSet(c.getStringList("integrations.worldguard.safe-regions")))),
+                c.getBoolean("debug.enabled", false));
     }
 
-    private void loadConfig() {
-        FileConfiguration config = plugin.getConfig();
-
-        this.combatTagDuration = config.getLong("combat-tag-duration", 15) * 1000;
-        this.enabledInCreative = config.getBoolean("enable-in-creative", false);
-        this.pluginEnabled = config.getBoolean("enabled", true);
-        this.retaliationOnly = config.getBoolean("retaliation-attack", false);
-        this.retaliationWindow = config.getLong("retaliation-attack-duration", 10) * 1000;
-        this.setAttackerOnCombatOnRetaliation = config.getBoolean("set-attacker-on-combat", true);
-        this.punishmentMethod = config.getString("punishment-method", "kill");
-        this.banDuration = config.getLong("ban-duration", 1440);
-        this.disabledWorlds = config.getStringList("disabled-worlds");
-        this.safeZonesEnabled = config.getBoolean("enable-safe-zone", false);
-        this.removeTagWhenEnteringSafezone = config.getBoolean("remove-tag-when-entering-safe-zone", false);
-        this.blockedCommands = config.getStringList("blocked-commands");
-        this.allowPortalInCombat = config.getBoolean("allow-portal-teleport", true);
-        this.allowEnderPearlInCombat = config.getBoolean("allow-enderpearl-teleport", false);
+    public PluginConfig settings() { return settings; }
+    public boolean isWorldDisabled(String world) {
+        return world != null && settings.disabledWorlds().contains(world.toLowerCase(Locale.ROOT));
     }
 
-    public long getCombatTagDuration() {
-        return combatTagDuration;
+    private List<PunishmentDefinition> punishments(FileConfiguration c) {
+        return PunishmentConfigParser.parse(c.getMapList("punishment.actions"), plugin.getLogger()::warning);
     }
 
-    public boolean isEnabledInCreative() {
-        return enabledInCreative;
+    private Duration duration(ConfigurationSection c, String path, Duration fallback, boolean zeroAllowed) {
+        return parsedDuration(c.get(path), path, fallback, zeroAllowed);
     }
 
-    public boolean isPluginEnabled() {
-        return pluginEnabled;
+    private Duration parsedDuration(Object raw, String path, Duration fallback, boolean zeroAllowed) {
+        Duration parsed = raw instanceof Number number ? Duration.ofSeconds(number.longValue())
+                : DurationParser.parse(raw == null ? null : raw.toString()).orElse(null);
+        if (parsed == null || parsed.isNegative() || (!zeroAllowed && parsed.isZero())) {
+            warn(path, raw, DurationParser.format(fallback));
+            return fallback;
+        }
+        return parsed;
     }
 
-    public boolean isRetaliationOnly() {
-        return retaliationOnly;
+    private <T extends Enum<T>> T enumValue(ConfigurationSection c, String path, Class<T> type, T fallback) {
+        String raw = c.getString(path, fallback.name());
+        try { return Enum.valueOf(type, raw.trim().toUpperCase(Locale.ROOT).replace('-', '_')); }
+        catch (IllegalArgumentException exception) {
+            warn(path, raw, fallback.name());
+            return fallback;
+        }
     }
 
-    public long getRetaliationWindow() {
-        return retaliationWindow;
+    private void warn(String key, Object value, String fallback) {
+        plugin.getLogger().warning("Invalid value for '" + key + "' (" + value + "); using " + fallback + ".");
     }
 
-    public boolean isSetAttackerOnCombatOnRetaliation() {
-        return setAttackerOnCombatOnRetaliation;
+    private Set<String> lowerSet(List<String> values) {
+        Set<String> result = new HashSet<>();
+        values.stream().filter(v -> v != null && !v.isBlank()).map(v -> v.toLowerCase(Locale.ROOT)).forEach(result::add);
+        return Set.copyOf(result);
     }
 
-    public String getPunishmentMethod() {
-        return punishmentMethod;
-    }
-
-    public long getBanDuration() {
-        return banDuration;
-    }
-
-    public List<String> getDisabledWorlds() {
-        return disabledWorlds;
-    }
-
-    public boolean areSafeZonesEnabled() {
-        return safeZonesEnabled;
-    }
-
-    public boolean shouldRemoveTagWhenEnteringSafezone() {
-        return removeTagWhenEnteringSafezone;
-    }
-
-    public List<String> getBlockedCommands() {
-        return blockedCommands;
-    }
-
-    public boolean isAllowPortalInCombat() {
-        return allowPortalInCombat;
-    }
-
-    public boolean isAllowEnderPearlInCombat() {
-        return allowEnderPearlInCombat;
-    }
+    // Binary/source compatibility for integrations compiled against NMCL 1.x.
+    @Deprecated public long getCombatTagDuration() { return settings.combat().duration().toMillis(); }
+    @Deprecated public boolean isEnabledInCreative() { return settings.combat().creativeMode(); }
+    @Deprecated public boolean isPluginEnabled() { return settings.enabled(); }
+    @Deprecated public boolean isRetaliationOnly() { return settings.combat().retaliation().enabled(); }
+    @Deprecated public long getRetaliationWindow() { return settings.combat().retaliation().window().toMillis(); }
+    @Deprecated public boolean isSetAttackerOnCombatOnRetaliation() { return settings.combat().retaliation().tagAttackerImmediately(); }
+    @Deprecated public String getPunishmentMethod() { return settings.punishments().getFirst().type().name(); }
+    @Deprecated public long getBanDuration() { return settings.punishments().getFirst().duration().toMinutes(); }
+    @Deprecated public List<String> getDisabledWorlds() { return List.copyOf(settings.disabledWorlds()); }
+    @Deprecated public boolean areSafeZonesEnabled() { return settings.safeZones().enabled(); }
+    @Deprecated public boolean shouldRemoveTagWhenEnteringSafezone() { return settings.safeZones().removeCombatOnEntry(); }
+    @Deprecated public List<String> getBlockedCommands() { return List.copyOf(settings.commands().commands()); }
+    @Deprecated public boolean isAllowPortalInCombat() { return settings.teleport().portals(); }
+    @Deprecated public boolean isAllowEnderPearlInCombat() { return settings.teleport().enderPearls(); }
 }

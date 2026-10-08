@@ -1,85 +1,35 @@
 # NoMoreCombatLog
-A simple and configurable Paper plugin that prevents players from combat logging.
 
----
+NoMoreCombatLog (NMCL) is a Paper plugin for PvP combat tagging. This branch targets Minecraft 1.21 and Java 21. When players fight, both get a timer. If someone disconnects before it runs out, NMCL applies the punishment you configured.
 
-##  Features
+## Getting started
 
+Put the plugin JAR in your server's `plugins` folder and start the server. NMCL creates its files on first launch:
 
--  Players are placed in combat when attacking or being attacked.
-- The combat tag lasts for a configurable duration.
-- Actionbar messages show remaining tag time.
-- If a tagged player logs out before the timer ends, they are automatically killed (can be changed to ban).
-- Players can be prevented from using portals while in combat.
-- Commands can be blocked during combat.
-- Configurable to allow or disallow tagging in creative mode.
-- Can be disabled in specific worlds.
+- [`config.yml`](src/main/resources/config.yml) controls combat time, damage sources, grace periods, displays, commands, teleport restrictions, safe zones, and punishments.
+- [`messages.yml`](src/main/resources/messages.yml) contains the short messages players see.
+- Safe zones are stored separately in `safezones.yml`.
 
-### Retaliation Mode (optional)
-- Tag only when player is attacked and attacks back within a configurable time window.
+Combat lasts **30 seconds** by default. Durations such as `30s`, `5m`, and `1h30m` work in the config and admin commands. Active tags are saved automatically and restored after a restart. NMCL backs up and migrates older configs.
 
-### Safe Zones
--You can add custom safezones where players cant attack eachother.
-
----
-
-## Installation
-
-1. Download the latest release of **NoMoreCombatLog.jar**.
-2. Place it inside your server’s `/plugins/` directory.
-3. Start or restart your Paper server.
-
----
-
-## Configuration
-
-Everything can be changed in the `config.yml` file:
-
-```yaml
-enabled: true                    # Enable or disable the plugin
-combat-tag-duration: 30          # Duration (seconds) of the combat tag
-enable-in-creative: false        # Allow tagging in creative mode
-retaliationattack: false         # Enable retaliation-based tagging
-retaliation-window: 10           # Time window for retaliation mode
-set-attacker-on-combat: true     # Tag attacker in retaliation mode
-allow-portal-teleport: false     # Allow portals during combat
-blocked-commands: []             # Commands blocked during combat
-disabled-worlds: # List of worlds where combat logging is disabled
-  - world_the_end
-
-enable-safe-zone: false # Whether to enable safe zones where players are not tagged in combat
-
-remove-tag-when-entering-safe-zone: false # When set to true. Combat tag is removed when entering a safe zone
-```
+Set `display.type` to `ACTION_BAR`, `BOSS_BAR`, `TITLE`, or `NONE` to choose the combat display. Punishments can include killing, banning, temporary bans, console commands, and dropping inventory or experience. Join and respawn grace periods, disabled worlds, bypass permissions, and safe zones let you decide where combat tagging applies.
 
 ## Commands
-| Command                              | Permission               | Description                      |
-|--------------------------------------|---------------------------|----------------------------------|
-| `/nmcl`                              | `nomorecombatlog.use`     | Shows the plugin version.        |
-| `/nmcl reload`                       | `nomorecombatlog.reload`  | Reloads the plugin configuration. |
-| `/nmcl safezone add <name> <radius>` | `nomorecombatlog.safezone.add` | Adds a safezone |
-| `/nmcl safezone remove <name>` | `nomorcombatlog.safezone.remove` | Removes a safezone |
-|`/nmcl safezone list` | `nomorecombatlog.safezone.list` | Lists all safezones |
 
----
+Type `/nmcl` for the commands you can use. Tab completion suggests online players, existing safe zones, and example durations.
 
-## Permissions
-| Permission                | Description                   |
-|---------------------------|-------------------------------|
-| `nomorecombatlog.reload`  | Allows use of the `/nmcl reload` command. |
-| `nomorecombatlog.bypass` | Bypass combat logging         |
-| `nomorecombatlog.safezone.add` | Allows adding safezones |
-| `nomorecombatlog.safezone.remove` | Allows removing safezones |
-| `nomorecombatlog.safezone.list` | Allows listing all safezones |
+| Command | What it does |
+| --- | --- |
+| `/nmcl status <player>` | Show a player's combat status |
+| `/nmcl tag <player> [duration]` | Start or refresh combat |
+| `/nmcl untag <player>` | Remove a combat tag |
+| `/nmcl extend <player> <duration>` | Add time to a tag |
+| `/nmcl list` | Show active tags |
+| `/nmcl debug <player>` | Show details useful for troubleshooting |
+| `/nmcl reload [config\|messages\|all]` | Reload settings or messages |
 
+`tagall` and `untagall` are available for bulk changes. Use `/nmcl safezone` to add, inspect, list, or remove spherical and cuboid zones. Admin commands have separate permissions; see [`paper-plugin.yml`](src/main/resources/paper-plugin.yml). `nomorecombatlog.admin` grants all admin commands.
 
----
-## TODO
-- Add customizable messages.
-- don't kill players in combat because of server restart
-- ~~more punishments for combat logging~~
-- support for other server types (Spigot)
-- keep track of combat loggers across server restarts
-- ~~disabled worlds support~~
-- ~~disable commands while in combat~~
-- Toggle safezone message
+## For other plugins
+
+PlaceholderAPI is optional. Available placeholders include `%nmcl_in_combat%`, `%nmcl_combat_time%`, `%nmcl_combat_time_seconds%`, `%nmcl_opponent%`, and `%nmcl_reason%`. Other plugins can use `NoMoreCombatLog.getAPI()` and listen for combat start, refresh, end, and combat log events.
