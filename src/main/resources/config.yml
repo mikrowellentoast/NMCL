@@ -40,7 +40,7 @@ teleport:
 
 worlds:
   disabled:
-    - world_the_end
+#    - world_the_end
 
 safe-zones:
   enabled: false
